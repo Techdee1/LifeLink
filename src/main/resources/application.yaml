@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: lifelink
+  datasource:
+    url: jdbc:mysql://localhost:3306/lifelink
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: Henry123@#$
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+      show_sql: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+
+debug: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security.web: DEBUG
+
+INTERSWITCH:
+  CLIENT_ID: IKIA4F7AFB5B51510198B1ED244C9B014286FA2C7FF8
+  CLIENT_SECRET: 0F9ACB2440EF0FD71A51DE400D17B5DA26FE1039
+  MERCHANT_CODE: MX276056
