@@ -1,19 +1,27 @@
 package org.interswitch.app.LifeLink.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.interswitch.app.LifeLink.model.Payment;
 import org.interswitch.app.LifeLink.repository.PaymentRepository;
+import org.interswitch.app.LifeLink.request.LiquidityRequest;
 import org.interswitch.app.LifeLink.request.PaymentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
+import java.util.Map;
 
 @Service
 public class PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+    @Autowired
+    private InterswitchService interswitchService;
+    @Autowired
+    private HospitalService hospitalService;
 
     public String createPaymentWebhook(PaymentRequest paymentRequest) {
         Payment payment = new Payment();
@@ -40,5 +48,22 @@ public class PaymentService {
         }
 
         return hex.toString();
+    }
+
+    public Map<String,Object> requestForLiquidity(LiquidityRequest liquidityRequest, Long caseId) throws JsonProcessingException {
+        if(interswitchService.verifyBVN(liquidityRequest)) {
+            if(Boolean.parseBoolean(hospitalService.viewCaseProgress(caseId).get("is_bridge_eligible").toString())) {
+                Map<String,Object> data = hospitalService.viewCaseProgress(caseId);
+                BigDecimal targetAmount = new BigDecimal(data.get("target_amount").toString());
+                BigDecimal raisedAmount = new BigDecimal(data.get("raised_amount").toString());
+                BigDecimal amountNeeded = targetAmount.subtract(raisedAmount);
+
+                interswitchService.lendBridge(liquidityRequest, hospitalService.getCaseById(caseId),amountNeeded,raisedAmount);
+                hospitalService.updateCaseProgress(caseId);
+                return Map.of("status","BRIDGED","bridged_amount", amountNeeded,"message", "BVN verified, case is eligible for bridge funding, bridge funding request initiated.");
+            }
+            return Map.of("message", "BVN verified, but case is not eligible for bridge funding.");
+        }
+        return Map.of("message", "BVN verification failed, bridge funding request denied.");
     }
 }

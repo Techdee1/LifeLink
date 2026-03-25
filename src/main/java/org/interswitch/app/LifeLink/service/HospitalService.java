@@ -106,6 +106,18 @@ public class HospitalService {
         ,"raised_amount", raisedAmount.doubleValue(), "target_amount", targetAmount.doubleValue(), "percentage", percentage, "virtual_account", virtualAccount.getVirtualAccountNumber(), "is_bridge_eligible", is_bridge_eligible);
     }
 
+    public Case getCaseById(Long caseId) {
+        return caseRepository.findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found."));
+    }
+
+    public void updateCaseProgress(Long caseId) {
+        Case user_case = caseRepository.findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found."));
+        user_case.setPatientCase(PatientCase.CLOSED);
+        caseRepository.save(user_case);
+    }
+
     @NotNull
     private static VirtualAccount getVirtualAccount(VirtualAccountResponse virtualAccountResponse, Case user_case) {
         VirtualAccount virtualAccount = new VirtualAccount();

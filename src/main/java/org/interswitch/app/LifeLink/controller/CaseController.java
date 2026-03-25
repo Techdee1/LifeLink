@@ -1,6 +1,8 @@
 package org.interswitch.app.LifeLink.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.interswitch.app.LifeLink.request.CaseRequest;
+import org.interswitch.app.LifeLink.request.LiquidityRequest;
 import org.interswitch.app.LifeLink.request.PaymentRequest;
 import org.interswitch.app.LifeLink.service.HospitalService;
 import org.interswitch.app.LifeLink.service.InterswitchService;
@@ -51,5 +53,10 @@ public class CaseController {
             return ResponseEntity.status(403).body("Invalid signature");
         }
         return ResponseEntity.ok().body(paymentService.createPaymentWebhook(paymentRequest));
+    }
+
+    @PostMapping("/{caseId}/bridge")
+    public ResponseEntity<?> requestLiquidity(@RequestBody LiquidityRequest liquidityRequest, @PathVariable Long caseId) throws JsonProcessingException {
+        return ResponseEntity.ok().body(paymentService.requestForLiquidity(liquidityRequest,caseId));
     }
 }
