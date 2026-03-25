@@ -68,7 +68,7 @@ public class InterswitchService {
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("merchantCode", PAYMENT_MERCHANT_CODE); // Global Test Merchant
         requestBody.put("provider", "WEMA");
-        requestBody.put("accountName", "LIFELINK / " + caseRequest.getPatientName().toUpperCase());
+        requestBody.put("accountName",caseRequest.getPatientName());
 
         try {
             VirtualAccountResponse data = webClient.post()
@@ -86,7 +86,7 @@ public class InterswitchService {
             return VirtualAccountResponse.builder()
                     .bankCode("999")
                     .bankName("Interswitch Sandbox Bank")
-                    .accountName("LIFELINK / " + caseRequest.getPatientName().toUpperCase())
+                    .accountName(caseRequest.getPatientName())
                     .accountNumber("1234567890")
                     .build();
         }
