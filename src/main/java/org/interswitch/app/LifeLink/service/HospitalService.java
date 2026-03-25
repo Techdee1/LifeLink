@@ -39,8 +39,6 @@ public class HospitalService {
     @Autowired
     private InterswitchService interswitchService;
     @Autowired
-    private CaseMapper caseMapper;
-    @Autowired
     private VirtualAccountRepository virtualAccountRepository;
     @Autowired
     private CaseRepository caseRepository;
@@ -68,12 +66,16 @@ public class HospitalService {
     }
 
     public Map<String,Object> createPatientCase(CaseRequest caseRequest) {
-        //check if patient is available in the system
         //verify hospital id
+        Hospital hospital = hospitalRepository.findById(caseRequest.getHId())
+                .orElseThrow(() -> new RuntimeException("Hospital not found."));
+
         //create virtual account for patient case
         VirtualAccountResponse virtualAccountResponse = interswitchService.createVirtualAccount(caseRequest);
-        Case user_case = caseMapper.convertToModel(caseRequest);
-        caseRepository.save(user_case);
+        if(caseRepository.findByPatientName(caseRequest.getPatientName()).isPresent())
+            throw new RuntimeException("Case already exists for patient.");
+
+        Case user_case = getUserCase(caseRequest,hospital);
 
         VirtualAccount virtualAccount = getVirtualAccount(virtualAccountResponse, user_case);
 
@@ -96,5 +98,18 @@ public class HospitalService {
         virtualAccount.setCaseId(user_case.getCaseId());
         virtualAccount.setAccountName(virtualAccountResponse.getAccountName());
         return virtualAccount;
+    }
+
+    @NotNull
+    public Case getUserCase(CaseRequest caseRequest, Hospital hospital) {
+        Case user_case = new Case();
+        user_case.setPatientEmail(caseRequest.getPatientEmail());
+        user_case.setPatientEmail(caseRequest.getPatientName());
+        user_case.setDepositTarget(caseRequest.getDepositTarget());
+        user_case.setLeadKinName(caseRequest.getLeadKinName());
+        user_case.setLeadKinPhone(caseRequest.getLeadKinPhone());
+        user_case.setHospital(hospital);
+        caseRepository.save(user_case);
+        return user_case;
     }
 }

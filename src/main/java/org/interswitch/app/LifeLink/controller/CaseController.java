@@ -26,6 +26,6 @@ public class CaseController {
 
     @GetMapping("/token")
     public String getToken() {
-        return interswitchService.getInterswitchToken().getAccess_token();
+        return interswitchService.getInterswitchPaymentAccessToken().getAccess_token();
     }
 }
