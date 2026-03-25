@@ -43,7 +43,6 @@ public class SecurityConfiguration {
     private final static String[] publicUrls = {
             "/api/v1/lifelink/hospitals/auth/**",
             "/swagger-ui/**",
-            "/api/v1/lifelink/cases/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/webjars/**",
@@ -72,7 +71,7 @@ public class SecurityConfiguration {
     @Bean
     public AuthFilter authFilter(AuthenticationManager authenticationManager) {
         AuthFilter authFilter = new AuthFilter();
-        authFilter.setFilterProcessesUrl("/api/v1/lifelink/hospital/login");
+        authFilter.setFilterProcessesUrl("/api/v1/lifelink/hospitals/auth/login");
         authFilter.setAuthenticationManager(authenticationManager);
         authFilter.setAuthenticationSuccessHandler((request, response, authentication) -> {
             response.setStatus(HttpServletResponse.SC_OK);

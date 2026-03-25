@@ -150,7 +150,7 @@ public class InterswitchService {
 
         // call API
         return webClient.post()  // POST is recommended
-                .uri("/lending-service/api/v1/salary/loan")
+                .uri("https://sandbox.interswitchng.com/lending-service/api/v1/salary/loan")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)

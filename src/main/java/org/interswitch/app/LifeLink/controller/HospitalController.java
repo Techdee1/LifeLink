@@ -1,6 +1,7 @@
 package org.interswitch.app.LifeLink.controller;
 
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
+import org.interswitch.app.LifeLink.request.HospitalLoginRequest;
 import org.interswitch.app.LifeLink.service.HospitalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,11 @@ public class HospitalController {
     public Map<String,Object> createHospitalAccount(@RequestBody HospitalDataRequest hospitalDataRequest) {
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(hospitalService.createHospitalAccount(hospitalDataRequest))
                 .getBody();
+    }
+
+    @PostMapping("/auth/login")
+    public void login(@RequestBody HospitalLoginRequest hospitalLoginRequest) {
+
     }
 
     @GetMapping("/data/{hospitalEmail}")

@@ -1,5 +1,6 @@
 package org.interswitch.app.LifeLink.model;
 
+import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -8,10 +9,12 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
+@Entity
 public class Loan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
     private Long caseId;
     private BigDecimal bridgedAmount; //amount requested by the customer
     private BigDecimal interestAmount; //interest amount calculated based on the bridged amount

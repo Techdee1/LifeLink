@@ -1,9 +1,14 @@
 package org.interswitch.app.LifeLink.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
+import org.interswitch.app.LifeLink.model.Loan;
 import org.interswitch.app.LifeLink.model.Payment;
+import org.interswitch.app.LifeLink.repository.LoanRepository;
 import org.interswitch.app.LifeLink.repository.PaymentRepository;
+import org.interswitch.app.LifeLink.request.ApiResponse;
 import org.interswitch.app.LifeLink.request.LiquidityRequest;
+import org.interswitch.app.LifeLink.request.LoanResponse;
 import org.interswitch.app.LifeLink.request.PaymentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +18,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class PaymentService {
 
@@ -22,6 +28,8 @@ public class PaymentService {
     private InterswitchService interswitchService;
     @Autowired
     private HospitalService hospitalService;
+    @Autowired
+    private LoanRepository loanRepository;
 
     public String createPaymentWebhook(PaymentRequest paymentRequest) {
         Payment payment = new Payment();
@@ -58,9 +66,19 @@ public class PaymentService {
                 BigDecimal raisedAmount = new BigDecimal(data.get("raised_amount").toString());
                 BigDecimal amountNeeded = targetAmount.subtract(raisedAmount);
 
-                interswitchService.lendBridge(liquidityRequest, hospitalService.getCaseById(caseId),amountNeeded,raisedAmount);
+                LoanResponse loanResponse = interswitchService.lendBridge(liquidityRequest, hospitalService.getCaseById(caseId),amountNeeded,raisedAmount);
                 hospitalService.updateCaseProgress(caseId);
-                return Map.of("status","BRIDGED","bridged_amount", amountNeeded,"message", "BVN verified, case is eligible for bridge funding, bridge funding request initiated.");
+
+                Loan loan = new Loan();
+                loan.setCaseId(caseId);
+                loan.setBridgedAmount(amountNeeded);
+                BigDecimal interestAmount = amountNeeded.multiply(BigDecimal.valueOf(0.115));
+                loan.setInterestAmount(interestAmount);
+                loan.setTotalRepaymentAmount(amountNeeded.add(interestAmount));
+
+                loanRepository.save(loan);
+
+                return Map.of("responseCode",loanResponse.getResponseCode(),"bridged_amount", amountNeeded,"message", loanResponse.getResponseMessage());
             }
             return Map.of("message", "BVN verified, but case is not eligible for bridge funding.");
         }

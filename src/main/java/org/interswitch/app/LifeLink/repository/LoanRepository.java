@@ -1,4 +1,7 @@
 package org.interswitch.app.LifeLink.repository;
 
-public class LoanRepository {
+import org.interswitch.app.LifeLink.model.Loan;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface LoanRepository extends JpaRepository<Loan, Long> {
 }
