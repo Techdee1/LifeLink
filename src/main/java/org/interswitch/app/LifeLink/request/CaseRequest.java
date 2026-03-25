@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.interswitch.app.LifeLink.model.PatientCase;
 import org.springframework.data.annotation.AccessType;
 
 import java.math.BigDecimal;
@@ -21,5 +22,6 @@ public class CaseRequest {
     private String leadKinName;
     private String patientEmail;
     private String leadKinPhone;
-    private BigDecimal depositTarget; //Naira
+    private BigDecimal depositTarget;
+    private PatientCase patientCase;
 }

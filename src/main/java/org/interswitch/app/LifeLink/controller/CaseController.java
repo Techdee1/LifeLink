@@ -28,4 +28,9 @@ public class CaseController {
     public String getToken() {
         return interswitchService.getInterswitchPaymentAccessToken().getAccess_token();
     }
+
+    @GetMapping("/{caseId}")
+    private ResponseEntity<Map<String,Object>> viewPatientCaseProgress(@PathVariable Long caseId) {
+        return ResponseEntity.ok().body(hospitalService.viewCaseProgress(caseId));
+    }
 }

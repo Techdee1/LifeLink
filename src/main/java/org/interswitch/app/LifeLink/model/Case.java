@@ -16,11 +16,15 @@ public class Case {
     @ManyToOne
     @JoinColumn(name = "hospital_account", referencedColumnName = "id")
     private Hospital hospital;
+
+    @Column(unique = true)
     private String patientName;
     private String leadKinName;
     private String leadKinPhone;
+    @Column(unique = true)
     private String patientEmail;
-    private BigDecimal depositTarget; //Naira
+    private BigDecimal depositTarget;
+    private PatientCase patientCase;
 
 
 }

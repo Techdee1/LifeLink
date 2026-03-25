@@ -5,6 +5,7 @@ import org.interswitch.app.LifeLink.mapper.CaseMapper;
 import org.interswitch.app.LifeLink.mapper.HospitalMapper;
 import org.interswitch.app.LifeLink.model.Case;
 import org.interswitch.app.LifeLink.model.Hospital;
+import org.interswitch.app.LifeLink.model.PatientCase;
 import org.interswitch.app.LifeLink.model.VirtualAccount;
 import org.interswitch.app.LifeLink.repository.CaseRepository;
 import org.interswitch.app.LifeLink.repository.HospitalAccountRepository;
@@ -19,6 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Map;
 
@@ -82,10 +84,26 @@ public class HospitalService {
         virtualAccountRepository.save(virtualAccount);
         log.info("virtual account details saved");
 
-        return Map.of("bankCode", virtualAccountResponse.getBankCode(),
+        return Map.of("caseId", user_case.getCaseId(),"bankCode", virtualAccountResponse.getBankCode(),
                 "virtualAccountNumber", virtualAccountResponse.getAccountNumber(),
                 "bankName", virtualAccountResponse.getBankName(),
-                "accountName", virtualAccountResponse.getAccountName());
+                "accountName", virtualAccountResponse.getAccountName(), "status", user_case.getPatientCase());
+    }
+
+    public Map<String,Object> viewCaseProgress(Long caseId) {
+        Case user_case = caseRepository.findById(caseId)
+                .orElseThrow(() -> new RuntimeException("Case not found."));
+        boolean is_bridge_eligible = false;
+        VirtualAccount virtualAccount = virtualAccountRepository.
+                findByPatientName(user_case.getPatientName()).orElseThrow(() -> new RuntimeException("account not found."));
+        BigDecimal raisedAmount = new BigDecimal(320000);
+        BigDecimal targetAmount = user_case.getDepositTarget();
+
+        double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
+        is_bridge_eligible = (percentage > 60);
+
+        return Map.of("patient", user_case.getPatientName(), "hospital", user_case.getHospital().getHospitalName()
+        ,"raised_amount", raisedAmount.doubleValue(), "target_amount", targetAmount.doubleValue(), "percentage", percentage, "virtual_account", virtualAccount.getVirtualAccountNumber(), "is_bridge_eligible", is_bridge_eligible);
     }
 
     @NotNull
@@ -104,10 +122,11 @@ public class HospitalService {
     public Case getUserCase(CaseRequest caseRequest, Hospital hospital) {
         Case user_case = new Case();
         user_case.setPatientEmail(caseRequest.getPatientEmail());
-        user_case.setPatientEmail(caseRequest.getPatientName());
+        user_case.setPatientName(caseRequest.getPatientName());
         user_case.setDepositTarget(caseRequest.getDepositTarget());
         user_case.setLeadKinName(caseRequest.getLeadKinName());
         user_case.setLeadKinPhone(caseRequest.getLeadKinPhone());
+        user_case.setPatientCase(PatientCase.OPEN);
         user_case.setHospital(hospital);
         caseRepository.save(user_case);
         return user_case;
