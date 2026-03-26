@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class Case {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long caseId;
     @ManyToOne
     @JoinColumn(name = "hospital_account", referencedColumnName = "id")

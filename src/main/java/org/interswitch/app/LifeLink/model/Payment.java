@@ -12,7 +12,7 @@ import org.interswitch.app.LifeLink.request.PaymentData;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String event;
     private String uuid;
