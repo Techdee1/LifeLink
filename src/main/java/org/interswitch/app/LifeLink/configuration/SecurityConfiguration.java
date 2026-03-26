@@ -46,6 +46,7 @@ public class SecurityConfiguration {
     private JwtFilter jwtFilter;
     private final static String[] publicUrls = {
             "/api/v1/lifelink/hospitals/auth/**",
+            "/api/v1/lifelink/ai/chat",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",

@@ -32,6 +32,8 @@ public class PaymentService {
     private HospitalService hospitalService;
     @Autowired
     private LoanRepository loanRepository;
+    @Autowired
+    private AiService aiService;
 
     public String createPaymentWebhook(PaymentRequest paymentRequest) {
         Payment payment = new Payment();
@@ -67,6 +69,19 @@ public class PaymentService {
                 BigDecimal targetAmount = new BigDecimal(data.get("target_amount").toString());
                 BigDecimal raisedAmount = new BigDecimal(data.get("raised_amount").toString());
                 BigDecimal amountNeeded = targetAmount.subtract(raisedAmount);
+
+                // AI risk scoring pre-check
+                try {
+                    Map<String, Object> riskResult = aiService.getLoanRiskScore(caseId, amountNeeded);
+                    String recommendation = riskResult.getOrDefault("recommendation", "APPROVE").toString();
+                    if ("DENY".equals(recommendation)) {
+                        return Map.of("message", "Bridge loan denied by risk assessment.",
+                                "risk_score", riskResult.getOrDefault("risk_score", 0),
+                                "explanation", riskResult.getOrDefault("explanation", ""));
+                    }
+                } catch (Exception e) {
+                    log.warn("AI risk scoring unavailable, proceeding without: {}", e.getMessage());
+                }
 
                 LoanResponse loanResponse = interswitchService.lendBridge(liquidityRequest, hospitalService.getCaseById(caseId),amountNeeded,raisedAmount);
                 hospitalService.updateCaseProgress(caseId);

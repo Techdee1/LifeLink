@@ -32,3 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 .env
+
+### Python ###
+__pycache__/
+*.py[cod]
+*.egg-info/
+ai-service/.env
