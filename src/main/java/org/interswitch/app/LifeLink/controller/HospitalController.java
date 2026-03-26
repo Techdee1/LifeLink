@@ -30,10 +30,20 @@ public class HospitalController {
 
     @PostMapping("/auth/refresh")
     public ResponseEntity<Map<String, Object>> fetchAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        String hospitalEmail = jwtService.getEmail(refreshTokenRequest.getRefreshToken());
-        Hospital hospital = hospitalService.fetchByHospitalEmail(hospitalEmail);
-        Map<String,Object> data = jwtService.createAccessKey(hospital);
-        return ResponseEntity.status(HttpStatus.CREATED.value()).body(data);
+        if (refreshTokenRequest == null || refreshTokenRequest.getRefreshToken() == null || refreshTokenRequest.getRefreshToken().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("status", HttpStatus.BAD_REQUEST.value(), "message", "refreshToken is required"));
+        }
+
+        try {
+            String hospitalEmail = jwtService.getEmail(refreshTokenRequest.getRefreshToken());
+            Hospital hospital = hospitalService.fetchByHospitalEmail(hospitalEmail);
+            Map<String,Object> data = jwtService.createAccessKey(hospital);
+            return ResponseEntity.status(HttpStatus.CREATED.value()).body(data);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("status", HttpStatus.UNAUTHORIZED.value(), "message", "Invalid refresh token"));
+        }
     }
 
     @PostMapping("/auth/login")

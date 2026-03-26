@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,14 +69,13 @@ public class InterswitchService {
     public VirtualAccountResponse createVirtualAccount(CaseRequest caseRequest) {
         String url = "https://qa.interswitchng.com/paymentgateway/api/v1/payable/virtualaccount";
 
-
-        AccessTokenResponse accessTokenResponse = getInterswitchPaymentAccessToken(GENERAL_CLIENT_ID,GENERAL_CLIENT_SECRET);
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("merchantCode", PAYMENT_MERCHANT_CODE); // Global Test Merchant
-        requestBody.put("provider", "WEMA");
-        requestBody.put("accountName",caseRequest.getPatientName());
-
         try {
+            AccessTokenResponse accessTokenResponse = getInterswitchPaymentAccessToken(GENERAL_CLIENT_ID,GENERAL_CLIENT_SECRET);
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("merchantCode", PAYMENT_MERCHANT_CODE); // Global Test Merchant
+            requestBody.put("provider", "WEMA");
+            requestBody.put("accountName",caseRequest.getPatientName());
+
             VirtualAccountResponse data = webClient.post()
                     .uri(url)
                     .header("Authorization", "Bearer " + accessTokenResponse.getAccess_token())
@@ -90,6 +88,7 @@ public class InterswitchService {
             return data;
         } catch (Exception e) {
             // If Interswitch blocks your Client ID, this "Simulated Success" keeps your demo alive
+            System.err.println("Virtual account provider failed, using fallback: " + e.getMessage());
             return VirtualAccountResponse.builder()
                     .bankCode("999")
                     .bankName("Interswitch Sandbox Bank")

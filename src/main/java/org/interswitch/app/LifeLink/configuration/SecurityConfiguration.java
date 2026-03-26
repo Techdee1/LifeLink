@@ -95,9 +95,10 @@ public class SecurityConfiguration {
         });
 
         authFilter.setAuthenticationFailureHandler((request, response, exception) -> {
-            response.setStatus(response.getStatus());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
             response.getWriter().write(objectMapper.writeValueAsString(Map.
-                    of("status", response.getStatus(), "message", "unauthenticated")));
+                    of("status", HttpServletResponse.SC_UNAUTHORIZED, "message", "unauthenticated")));
         });
         return authFilter;
     }

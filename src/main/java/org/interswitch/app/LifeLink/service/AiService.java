@@ -2,8 +2,10 @@ package org.interswitch.app.LifeLink.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -37,10 +39,16 @@ public class AiService {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
         } catch (WebClientResponseException e) {
             log.error("AI chat request failed: {}", e.getResponseBodyAsString());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (WebClientRequestException e) {
+            log.error("AI chat request failed to connect: {}", e.getMessage());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (Exception e) {
+            log.error("AI chat request failed unexpectedly", e);
             return Map.of("error", "AI service unavailable", "detail", e.getMessage());
         }
     }
@@ -55,10 +63,16 @@ public class AiService {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
         } catch (WebClientResponseException e) {
             log.error("AI risk scoring request failed: {}", e.getResponseBodyAsString());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (WebClientRequestException e) {
+            log.error("AI risk scoring request failed to connect: {}", e.getMessage());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (Exception e) {
+            log.error("AI risk scoring request failed unexpectedly", e);
             return Map.of("error", "AI service unavailable", "detail", e.getMessage());
         }
     }
@@ -70,10 +84,16 @@ public class AiService {
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(Map.of())
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
         } catch (WebClientResponseException e) {
             log.error("AI case prediction request failed: {}", e.getResponseBodyAsString());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (WebClientRequestException e) {
+            log.error("AI case prediction request failed to connect: {}", e.getMessage());
+            return Map.of("error", "AI service unavailable", "detail", e.getMessage());
+        } catch (Exception e) {
+            log.error("AI case prediction request failed unexpectedly", e);
             return Map.of("error", "AI service unavailable", "detail", e.getMessage());
         }
     }

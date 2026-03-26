@@ -1,13 +1,11 @@
 package org.interswitch.app.LifeLink.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.interswitch.app.LifeLink.mapper.CaseMapper;
 import org.interswitch.app.LifeLink.mapper.HospitalMapper;
 import org.interswitch.app.LifeLink.model.*;
 import org.interswitch.app.LifeLink.pagination.CasePageRequest;
 import org.interswitch.app.LifeLink.repository.*;
 import org.interswitch.app.LifeLink.request.CaseRequest;
-import org.interswitch.app.LifeLink.request.CaseResponse;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
 import org.interswitch.app.LifeLink.request.VirtualAccountResponse;
 import org.jetbrains.annotations.NotNull;
@@ -64,8 +62,13 @@ public class HospitalService {
         HospitalDataRequest hospitalDataRequest = hospitalRepository.findByHospitalEmail(hospitalEmail)
                 .map(hospitalMapper::convertModelToRequest)
                 .orElseThrow(() -> new RuntimeException("Hospital Account not found."));
-        long expiry = (5 * 60) + System.currentTimeMillis();
-        redisTemplate.opsForValue().set(key, hospitalDataRequest, Duration.ofMinutes(expiry));
+
+        // Cache is best-effort; API response should not fail when Redis is unavailable.
+        try {
+            redisTemplate.opsForValue().set(key, hospitalDataRequest, Duration.ofMinutes(5));
+        } catch (RuntimeException e) {
+            log.warn("Failed to cache hospital data for {}", hospitalEmail, e);
+        }
         return hospitalDataRequest;
     }
 
