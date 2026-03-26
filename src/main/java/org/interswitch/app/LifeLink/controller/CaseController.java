@@ -27,6 +27,8 @@ public class CaseController {
     private PaymentService paymentService;
     @Value("${INTERSWITCH.GENERAL_CLIENT_SECRET}")
     private String GENERAL_CLIENT_SECRET;
+    @Value("${INTERSWITCH.GENERAL_CLIENT_ID}")
+    private String GENERAL_CLIENT_ID;
 
     @PostMapping("/initiate")
     public ResponseEntity<Map<String,Object>> createCase(@RequestBody CaseRequest caseRequest) {
@@ -35,7 +37,7 @@ public class CaseController {
 
     @GetMapping("/token")
     public String getToken() {
-        return interswitchService.getInterswitchPaymentAccessToken().getAccess_token();
+        return interswitchService.getInterswitchPaymentAccessToken(GENERAL_CLIENT_ID,GENERAL_CLIENT_SECRET).getAccess_token();
     }
 
     @GetMapping("/{caseId}")
@@ -53,6 +55,17 @@ public class CaseController {
             return ResponseEntity.status(403).body("Invalid signature");
         }
         return ResponseEntity.ok().body(paymentService.createPaymentWebhook(paymentRequest));
+    }
+
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getCaseHistory(@RequestParam int pageNo, @RequestParam int pageSize) {
+        return ResponseEntity.ok().body(hospitalService.fetchAllCases(pageNo,pageSize));
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<?> getActiveCases() {
+        return ResponseEntity.ok().body(hospitalService.fetchCompletedCase());
     }
 
     @PostMapping("/{caseId}/bridge")

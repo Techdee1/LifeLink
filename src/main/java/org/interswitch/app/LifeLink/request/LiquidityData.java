@@ -9,5 +9,5 @@ public class LiquidityData {
 
     private String firstName;
     private String lastName;
-    private String leadKinBvn;
+    private String bvn;
 }

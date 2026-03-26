@@ -37,8 +37,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
             if(email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = myUserDetailsService.loadUserByUsername(email);
+                System.out.println("Hello");
                 //check for expiration and validate user
-                if(jwtService.checkExpiration(token) && jwtService.validateHospital(email,userDetails)) {
+                if(!jwtService.checkExpiration(token) && jwtService.validateHospital(email,userDetails)) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                             new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

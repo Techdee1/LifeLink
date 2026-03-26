@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Entity
 @Data
 public class VirtualAccount {
@@ -21,4 +23,11 @@ public class VirtualAccount {
     private String accountName;
     private Long caseId;
     private String patientName;
+    private String patientEmail;
+    private PatientCase status;
+    private BigDecimal raisedAmount;
+    private BigDecimal targetAmount;
+    private Double percentage;
+
+
 }

@@ -8,12 +8,12 @@ spring:
     password: Henry123@#$
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${redis_host}
+      port: ${redis_port}
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
       show_sql: true
@@ -41,3 +41,5 @@ INTERSWITCH:
   PAYMENT_CLIENT_SECRET: ${INTERSWITCH_PAYMENT_CLIENT_SECRET}
   PAYMENT_MERCHANT_CODE: ${INTERSWITCH_PAYMENT_MERCHANT_CODE}
   PAYMENT_PAYID: ${INTERSWITCH_PAYMENT_PAYID}
+  VERIFICATION_CLIENT_ID: ${INTERSWITCH_VERIFICATION_ID}
+  VERIFICATION_CLIENT_SECRET: ${INTERSWITCH_VERIFICATION_SECRET}

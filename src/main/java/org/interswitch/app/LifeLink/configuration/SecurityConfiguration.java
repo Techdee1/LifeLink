@@ -23,7 +23,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -86,7 +90,7 @@ public class SecurityConfiguration {
             Map<String,Object> accessToken = jwtService.createAccessKey(hospital);
             Map<String,Object> refreshToken = jwtService.createRefreshKey(hospital);
 
-            response.getWriter().write(objectMapper.writeValueAsString(Map.of("access", accessToken, "refresh", refreshToken)));
+            response.getWriter().write(objectMapper.writeValueAsString(Map.of("access", accessToken, "refresh", refreshToken, "hospitalId", hospital.getId())));
         });
 
         authFilter.setAuthenticationFailureHandler((request, response, exception) -> {
@@ -103,8 +107,22 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfiguration() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedMethods(List.of("POST","GET","DELETE","PUT", "OPTIONS"));
+        corsConfiguration.setAllowedHeaders(List.of("*"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
+        corsConfiguration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
+        urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
+
+        return urlBasedCorsConfigurationSource;
+    }
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, AuthenticationManager authenticationManager) {
         return httpSecurity.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfiguration()))
                 .authorizeHttpRequests(requests -> requests.requestMatchers(publicUrls)
                         .permitAll().anyRequest().authenticated())
                 .addFilterAt(authFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)

@@ -7,11 +7,13 @@ import org.interswitch.app.LifeLink.model.Case;
 import org.interswitch.app.LifeLink.model.Hospital;
 import org.interswitch.app.LifeLink.model.PatientCase;
 import org.interswitch.app.LifeLink.model.VirtualAccount;
+import org.interswitch.app.LifeLink.pagination.CasePageRequest;
 import org.interswitch.app.LifeLink.repository.CaseRepository;
 import org.interswitch.app.LifeLink.repository.HospitalAccountRepository;
 import org.interswitch.app.LifeLink.repository.HospitalRepository;
 import org.interswitch.app.LifeLink.repository.VirtualAccountRepository;
 import org.interswitch.app.LifeLink.request.CaseRequest;
+import org.interswitch.app.LifeLink.request.CaseResponse;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
 import org.interswitch.app.LifeLink.request.VirtualAccountResponse;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -44,6 +49,8 @@ public class HospitalService {
     private VirtualAccountRepository virtualAccountRepository;
     @Autowired
     private CaseRepository caseRepository;
+    @Autowired
+    private CasePageRequest casePageRequest;
 
     public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
@@ -74,13 +81,12 @@ public class HospitalService {
 
         //create virtual account for patient case
         VirtualAccountResponse virtualAccountResponse = interswitchService.createVirtualAccount(caseRequest);
-        if(caseRepository.findByPatientName(caseRequest.getPatientName()).isPresent())
+        if(caseRepository.findByPatientName(caseRequest.getPatientName().trim()).isPresent())
             throw new RuntimeException("Case already exists for patient.");
 
         Case user_case = getUserCase(caseRequest,hospital);
 
         VirtualAccount virtualAccount = getVirtualAccount(virtualAccountResponse, user_case);
-
         virtualAccountRepository.save(virtualAccount);
         log.info("virtual account details saved");
 
@@ -96,7 +102,7 @@ public class HospitalService {
         boolean is_bridge_eligible = false;
         VirtualAccount virtualAccount = virtualAccountRepository.
                 findByPatientName(user_case.getPatientName()).orElseThrow(() -> new RuntimeException("account not found."));
-        BigDecimal raisedAmount = new BigDecimal(320000);
+        BigDecimal raisedAmount = new BigDecimal(183000);
         BigDecimal targetAmount = user_case.getDepositTarget();
 
         double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
@@ -111,6 +117,10 @@ public class HospitalService {
                 .orElseThrow(() -> new RuntimeException("Case not found."));
     }
 
+    public Hospital fetchByHospitalEmail(String hospitalEmail) {
+        return hospitalRepository.findByHospitalEmail(hospitalEmail)
+                .orElseThrow(() -> new RuntimeException("Hospital email not found"));
+    }
     public void updateCaseProgress(Long caseId) {
         Case user_case = caseRepository.findById(caseId)
                 .orElseThrow(() -> new RuntimeException("Case not found."));
@@ -118,15 +128,32 @@ public class HospitalService {
         caseRepository.save(user_case);
     }
 
+    public List<VirtualAccount> fetchCompletedCase() {
+        return virtualAccountRepository.findByStatus(PatientCase.OPEN);
+    }
+
+    public List<Case> fetchAllCases(int pageNo, int pageSize) {
+        return caseRepository.findAll(casePageRequest.pageRequest(pageNo,pageSize))
+                .stream().toList();
+    }
+
+
     @NotNull
     private static VirtualAccount getVirtualAccount(VirtualAccountResponse virtualAccountResponse, Case user_case) {
         VirtualAccount virtualAccount = new VirtualAccount();
-        virtualAccount.setAccountName(virtualAccountResponse.getAccountName());
+        virtualAccount.setPatientName(virtualAccountResponse.getAccountName());
         virtualAccount.setVirtualAccountNumber(virtualAccountResponse.getAccountNumber());
         virtualAccount.setBankName(virtualAccountResponse.getBankName());
         virtualAccount.setBankCode(virtualAccountResponse.getBankCode());
         virtualAccount.setCaseId(user_case.getCaseId());
         virtualAccount.setAccountName(virtualAccountResponse.getAccountName());
+        BigDecimal raisedAmount = new BigDecimal(400000);
+        virtualAccount.setRaisedAmount(raisedAmount);
+        virtualAccount.setTargetAmount(user_case.getDepositTarget());
+        double percentage = (raisedAmount.doubleValue() / user_case.getDepositTarget().doubleValue()) * 100;
+        virtualAccount.setPercentage(percentage);
+        virtualAccount.setStatus(PatientCase.OPEN);
+        virtualAccount.setPatientEmail(user_case.getPatientEmail());
         return virtualAccount;
     }
 
