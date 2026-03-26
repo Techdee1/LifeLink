@@ -16,10 +16,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final List<String> PUBLIC_PATH_PREFIXES = List.of(
+            "/api/v1/lifelink/hospitals/auth/",
+            "/api/v1/lifelink/cases/webhook",
+            "/api/v1/lifelink/ai/chat",
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/webjars",
+            "/actuator",
+            "/favicon.ico",
+            "/error"
+    );
 
     @Autowired
     private JwtService jwtService;
@@ -27,11 +40,17 @@ public class JwtFilter extends OncePerRequestFilter {
     private MyUserDetailsService myUserDetailsService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return PUBLIC_PATH_PREFIXES.stream().anyMatch(path::startsWith);
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         String token = null;
         String email = null;
-        if(header != null) {
+        if(header != null && header.startsWith("Bearer ")) {
             token = header.substring(7);
             email = jwtService.getEmail(token);
 
