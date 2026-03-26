@@ -36,6 +36,8 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.security.web: DEBUG
 
+AI_SERVICE_URL: ${AI_SERVICE_URL:http://localhost:8000}
+
 INTERSWITCH:
   PAYMENT_CLIENT_ID: ${INTERSWITCH_PAYMENT_CLIENT_ID}
   PAYMENT_CLIENT_SECRET: ${INTERSWITCH_PAYMENT_CLIENT_SECRET}
