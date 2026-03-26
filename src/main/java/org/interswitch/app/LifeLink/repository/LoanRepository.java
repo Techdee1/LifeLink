@@ -9,6 +9,6 @@ import java.math.BigDecimal;
 
 public interface LoanRepository extends JpaRepository<Loan, Long> {
 
-    @Query("SELECT COALESCE(SUM(p.bridgedAmount), 0) FROM Payment p")
+    @Query("SELECT COALESCE(SUM(p.bridgedAmount), 0) FROM Loan p")
     BigDecimal findSumBridgedAmount();
 }
