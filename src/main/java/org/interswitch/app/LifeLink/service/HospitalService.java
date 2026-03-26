@@ -3,15 +3,9 @@ package org.interswitch.app.LifeLink.service;
 import lombok.extern.slf4j.Slf4j;
 import org.interswitch.app.LifeLink.mapper.CaseMapper;
 import org.interswitch.app.LifeLink.mapper.HospitalMapper;
-import org.interswitch.app.LifeLink.model.Case;
-import org.interswitch.app.LifeLink.model.Hospital;
-import org.interswitch.app.LifeLink.model.PatientCase;
-import org.interswitch.app.LifeLink.model.VirtualAccount;
+import org.interswitch.app.LifeLink.model.*;
 import org.interswitch.app.LifeLink.pagination.CasePageRequest;
-import org.interswitch.app.LifeLink.repository.CaseRepository;
-import org.interswitch.app.LifeLink.repository.HospitalAccountRepository;
-import org.interswitch.app.LifeLink.repository.HospitalRepository;
-import org.interswitch.app.LifeLink.repository.VirtualAccountRepository;
+import org.interswitch.app.LifeLink.repository.*;
 import org.interswitch.app.LifeLink.request.CaseRequest;
 import org.interswitch.app.LifeLink.request.CaseResponse;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
@@ -24,10 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -51,6 +42,10 @@ public class HospitalService {
     private CaseRepository caseRepository;
     @Autowired
     private CasePageRequest casePageRequest;
+    @Autowired
+    private LoanRepository loanRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
@@ -102,7 +97,12 @@ public class HospitalService {
         boolean is_bridge_eligible = false;
         VirtualAccount virtualAccount = virtualAccountRepository.
                 findByPatientName(user_case.getPatientName()).orElseThrow(() -> new RuntimeException("account not found."));
-        BigDecimal raisedAmount = new BigDecimal(183000);
+
+        List<Payment> payments = paymentRepository.findByAccountName(virtualAccount.getAccountName());
+        BigDecimal raisedAmount = payments.stream()
+                .map(p -> p.getData().getAmount())
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal targetAmount = user_case.getDepositTarget();
 
         double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
@@ -135,6 +135,18 @@ public class HospitalService {
     public List<Case> fetchAllCases(int pageNo, int pageSize) {
         return caseRepository.findAll(casePageRequest.pageRequest(pageNo,pageSize))
                 .stream().toList();
+    }
+
+    public Map<String ,Object> getDashboardData() {
+         Map<String, Object> data = new HashMap<>();
+         int activeCases = fetchCompletedCase().size();
+         BigDecimal bridgeFunded = loanRepository.findSumBridgedAmount();
+         long liveSaved = loanRepository.count();
+
+         data.put("activeCases", activeCases);
+         data.put("bridgedFunded", bridgeFunded);
+         data.put("livesSaved", liveSaved);
+         return data;
     }
 
 

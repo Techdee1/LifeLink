@@ -41,6 +41,11 @@ public class HospitalController {
 
     }
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<Map<String ,Object>> getDashboardData() {
+        return ResponseEntity.ok().body(hospitalService.getDashboardData());
+    }
+
     @GetMapping("/data/{hospitalEmail}")
     public HospitalDataRequest getHospitalDataByEmail(@PathVariable String hospitalEmail) {
         return ResponseEntity.ok().body(hospitalService.
