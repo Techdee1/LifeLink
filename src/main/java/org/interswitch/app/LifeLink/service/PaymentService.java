@@ -12,13 +12,18 @@ import org.interswitch.app.LifeLink.request.LiquidityRequest;
 import org.interswitch.app.LifeLink.request.LoanResponse;
 import org.interswitch.app.LifeLink.request.PaymentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -35,31 +40,40 @@ public class PaymentService {
     @Autowired
     private AiService aiService;
 
-    public String createPaymentWebhook(PaymentRequest paymentRequest) {
+    @Async
+    public void createPaymentWebhook(PaymentRequest paymentRequest) {
+
+        if (paymentRequest.getUuid() == null) {
+            return;
+        }
+
         Payment payment = new Payment();
         payment.setData(paymentRequest.getData());
         payment.setUuid(paymentRequest.getUuid());
         payment.setEvent(paymentRequest.getEvent());
         payment.setTimestamp(paymentRequest.getTimestamp());
-        payment.setAccountName(paymentRequest.getData().getMerchantCustomerName());
 
-        paymentRepository.save(payment);
-        return "Payment info received";
-    }
-    public static String generateHmac(String secretKey, PaymentRequest message) throws Exception {
-
-        Mac mac = Mac.getInstance("HmacSHA512");
-        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HmacSHA512");
-
-        mac.init(secretKeySpec);
-        byte[] rawHmac = mac.doFinal(message.toString().getBytes());
-
-        StringBuilder hex = new StringBuilder();
-        for (byte b : rawHmac) {
-            hex.append(String.format("%02x", b));
+        if (paymentRequest.getData() != null) {
+            payment.setAccountName(paymentRequest.getData().getMerchantCustomerName());
         }
 
-        return hex.toString();
+        try {
+            paymentRepository.save(payment);
+        } catch (DataIntegrityViolationException e) {
+            // duplicate webhook → ignore
+        }
+    }
+    public static String generateHmac(String secretKey, String rawBody) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+
+        SecretKeySpec secretKeySpec =
+                new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+
+        mac.init(secretKeySpec);
+
+        byte[] rawHmac = mac.doFinal(rawBody.getBytes(StandardCharsets.UTF_8));
+
+        return Base64.getEncoder().encodeToString(rawHmac);
     }
 
     public Map<String,Object> requestForLiquidity(LiquidityRequest liquidityRequest, Long caseId) throws JsonProcessingException {
