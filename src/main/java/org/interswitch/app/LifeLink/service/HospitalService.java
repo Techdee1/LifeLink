@@ -131,13 +131,49 @@ public class HospitalService {
         caseRepository.save(user_case);
     }
 
-    public List<VirtualAccount> fetchCompletedCase() {
-        return virtualAccountRepository.findByStatus(PatientCase.OPEN);
+    public List<Map<String, Object>> fetchCompletedCase() {
+        return virtualAccountRepository.findByStatus(PatientCase.OPEN)
+                .stream().map(va -> {
+                    Map<String, Object> summary = new HashMap<>();
+                    summary.put("caseId", va.getCaseId());
+                    summary.put("patientName", va.getPatientName());
+                    summary.put("patientEmail", va.getPatientEmail());
+                    summary.put("status", va.getStatus() != null ? va.getStatus().name() : "OPEN");
+                    summary.put("raisedAmount", va.getRaisedAmount());
+                    summary.put("targetAmount", va.getTargetAmount());
+                    summary.put("percentage", va.getPercentage());
+                    summary.put("virtualAccountNumber", va.getVirtualAccountNumber());
+                    summary.put("bankName", va.getBankName());
+
+                    Case c = caseRepository.findById(va.getCaseId()).orElse(null);
+                    summary.put("createdAt", c != null ? c.getCreatedAt() : null);
+                    return summary;
+                }).toList();
     }
 
-    public List<Case> fetchAllCases(int pageNo, int pageSize) {
-        return caseRepository.findAll(casePageRequest.pageRequest(pageNo,pageSize))
-                .stream().toList();
+    public List<Map<String, Object>> fetchAllCases(int pageNo, int pageSize) {
+        return caseRepository.findAll(casePageRequest.pageRequest(pageNo, pageSize))
+                .stream().map(c -> {
+                    Map<String, Object> summary = new HashMap<>();
+                    summary.put("caseId", c.getCaseId());
+                    summary.put("patientName", c.getPatientName());
+                    summary.put("patientEmail", c.getPatientEmail());
+                    summary.put("status", c.getPatientCase() != null ? c.getPatientCase().name() : "OPEN");
+                    summary.put("targetAmount", c.getDepositTarget());
+                    summary.put("createdAt", c.getCreatedAt());
+
+                    VirtualAccount va = virtualAccountRepository.findByCaseId(c.getCaseId());
+                    if (va != null) {
+                        summary.put("raisedAmount", va.getRaisedAmount());
+                        summary.put("percentage", va.getPercentage());
+                        summary.put("virtualAccountNumber", va.getVirtualAccountNumber());
+                        summary.put("bankName", va.getBankName());
+                    } else {
+                        summary.put("raisedAmount", BigDecimal.ZERO);
+                        summary.put("percentage", 0.0);
+                    }
+                    return summary;
+                }).toList();
     }
 
     public Map<String ,Object> getDashboardData() {

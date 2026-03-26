@@ -45,7 +45,11 @@ public class SecurityConfiguration {
     private ObjectMapper objectMapper;
     @Autowired
     private JwtFilter jwtFilter;
-        private final static String[] publicUrls = {
+
+    @org.springframework.beans.factory.annotation.Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173}")
+    private String corsAllowedOrigins;
+
+    private final static String[] publicUrls = {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
@@ -113,7 +117,7 @@ public class SecurityConfiguration {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedMethods(List.of("POST","GET","DELETE","PUT", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
+        corsConfiguration.setAllowedOrigins(List.of(corsAllowedOrigins.split(",")));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
@@ -134,6 +138,8 @@ public class SecurityConfiguration {
                     "/api/v1/lifelink/hospitals/auth/refresh",
                     "/api/v1/lifelink/cases/webhook",
                     "/api/v1/lifelink/ai/chat")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/lifelink/cases/{caseId}")
                 .permitAll()
                 .requestMatchers(publicUrls).permitAll()
                 .anyRequest().authenticated())

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     class Config:
-        env_file = ".env"
+        env_file = "../.env", ".env"
         case_sensitive = True
 
 
