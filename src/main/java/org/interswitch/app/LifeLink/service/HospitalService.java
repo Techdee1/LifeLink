@@ -1,13 +1,11 @@
 package org.interswitch.app.LifeLink.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.interswitch.app.LifeLink.mapper.CaseMapper;
 import org.interswitch.app.LifeLink.mapper.HospitalMapper;
 import org.interswitch.app.LifeLink.model.*;
 import org.interswitch.app.LifeLink.pagination.CasePageRequest;
 import org.interswitch.app.LifeLink.repository.*;
 import org.interswitch.app.LifeLink.request.CaseRequest;
-import org.interswitch.app.LifeLink.request.CaseResponse;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
 import org.interswitch.app.LifeLink.request.VirtualAccountResponse;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +49,7 @@ public class HospitalService {
 
     public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
-        System.out.println(hospital.getSettlementAccount().getAccountId());
+        log.debug("Settlement account ID: {}", hospital.getSettlementAccount().getAccountId());
         hospital.setAccountPassword(passwordEncoder.encode(hospital.getAccountPassword()));
 
         hospitalAccountRepository.save(hospital.getSettlementAccount());
@@ -66,8 +64,13 @@ public class HospitalService {
         HospitalDataRequest hospitalDataRequest = hospitalRepository.findByHospitalEmail(hospitalEmail)
                 .map(hospitalMapper::convertModelToRequest)
                 .orElseThrow(() -> new RuntimeException("Hospital Account not found."));
-        long expiry = (5 * 60) + System.currentTimeMillis();
-        redisTemplate.opsForValue().set(key, hospitalDataRequest, Duration.ofMinutes(expiry));
+
+        // Cache is best-effort; API response should not fail when Redis is unavailable.
+        try {
+            redisTemplate.opsForValue().set(key, hospitalDataRequest, Duration.ofMinutes(5));
+        } catch (RuntimeException e) {
+            log.warn("Failed to cache hospital data for {}", hospitalEmail, e);
+        }
         return hospitalDataRequest;
     }
 
@@ -112,8 +115,10 @@ public class HospitalService {
 
         double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
         is_bridge_eligible = (percentage > 60);
-        if(is_bridge_eligible){
+        if(is_bridge_eligible && !user_case.isBridgeAlertSent()){
             whatsAppNotificationService.sendBridgeUnlockAlert(user_case.getLeadKinPhone());
+            user_case.setBridgeAlertSent(true);
+            caseRepository.save(user_case);
             log.info("bridge loan unlocked for caseId: {}", caseId);
         }
 
@@ -137,13 +142,49 @@ public class HospitalService {
         caseRepository.save(user_case);
     }
 
-    public List<VirtualAccount> fetchCompletedCase() {
-        return virtualAccountRepository.findByStatus(PatientCase.OPEN);
+    public List<Map<String, Object>> fetchCompletedCase() {
+        return virtualAccountRepository.findByStatus(PatientCase.OPEN)
+                .stream().map(va -> {
+                    Map<String, Object> summary = new HashMap<>();
+                    summary.put("caseId", va.getCaseId());
+                    summary.put("patientName", va.getPatientName());
+                    summary.put("patientEmail", va.getPatientEmail());
+                    summary.put("status", va.getStatus() != null ? va.getStatus().name() : "OPEN");
+                    summary.put("raisedAmount", va.getRaisedAmount());
+                    summary.put("targetAmount", va.getTargetAmount());
+                    summary.put("percentage", va.getPercentage());
+                    summary.put("virtualAccountNumber", va.getVirtualAccountNumber());
+                    summary.put("bankName", va.getBankName());
+
+                    Case c = caseRepository.findById(va.getCaseId()).orElse(null);
+                    summary.put("createdAt", c != null ? c.getCreatedAt() : null);
+                    return summary;
+                }).toList();
     }
 
-    public List<Case> fetchAllCases(int pageNo, int pageSize) {
-        return caseRepository.findAll(casePageRequest.pageRequest(pageNo,pageSize))
-                .stream().toList();
+    public List<Map<String, Object>> fetchAllCases(int pageNo, int pageSize) {
+        return caseRepository.findAll(casePageRequest.pageRequest(pageNo, pageSize))
+                .stream().map(c -> {
+                    Map<String, Object> summary = new HashMap<>();
+                    summary.put("caseId", c.getCaseId());
+                    summary.put("patientName", c.getPatientName());
+                    summary.put("patientEmail", c.getPatientEmail());
+                    summary.put("status", c.getPatientCase() != null ? c.getPatientCase().name() : "OPEN");
+                    summary.put("targetAmount", c.getDepositTarget());
+                    summary.put("createdAt", c.getCreatedAt());
+
+                    VirtualAccount va = virtualAccountRepository.findByCaseId(c.getCaseId());
+                    if (va != null) {
+                        summary.put("raisedAmount", va.getRaisedAmount());
+                        summary.put("percentage", va.getPercentage());
+                        summary.put("virtualAccountNumber", va.getVirtualAccountNumber());
+                        summary.put("bankName", va.getBankName());
+                    } else {
+                        summary.put("raisedAmount", BigDecimal.ZERO);
+                        summary.put("percentage", 0.0);
+                    }
+                    return summary;
+                }).toList();
     }
 
     public Map<String ,Object> getDashboardData() {
@@ -168,10 +209,9 @@ public class HospitalService {
         virtualAccount.setBankCode(virtualAccountResponse.getBankCode());
         virtualAccount.setCaseId(user_case.getCaseId());
         virtualAccount.setAccountName(virtualAccountResponse.getAccountName());
-        BigDecimal raisedAmount = new BigDecimal(400000);
-        virtualAccount.setRaisedAmount(raisedAmount);
+        virtualAccount.setRaisedAmount(BigDecimal.ZERO);
         virtualAccount.setTargetAmount(user_case.getDepositTarget());
-        double percentage = (raisedAmount.doubleValue() / user_case.getDepositTarget().doubleValue()) * 100;
+        double percentage = 0.0;
         virtualAccount.setPercentage(percentage);
         virtualAccount.setStatus(PatientCase.OPEN);
         virtualAccount.setPatientEmail(user_case.getPatientEmail());

@@ -7,7 +7,6 @@ import org.interswitch.app.LifeLink.filter.AuthFilter;
 import org.interswitch.app.LifeLink.filter.JwtFilter;
 import org.interswitch.app.LifeLink.model.Hospital;
 import org.interswitch.app.LifeLink.repository.HospitalRepository;
-import org.interswitch.app.LifeLink.service.HospitalService;
 import org.interswitch.app.LifeLink.service.security.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -18,11 +17,13 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,15 +45,18 @@ public class SecurityConfiguration {
     private ObjectMapper objectMapper;
     @Autowired
     private JwtFilter jwtFilter;
+
+    @org.springframework.beans.factory.annotation.Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173}")
+    private String corsAllowedOrigins;
+
     private final static String[] publicUrls = {
-            "/api/v1/lifelink/hospitals/auth/**",
-            "/api/v1/lifelink/ai/chat",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/webjars/**",
             "/favicon.ico",
-            "/actuator/**"
+            "/actuator/**",
+            "/error"
     };
 
 
@@ -95,9 +99,10 @@ public class SecurityConfiguration {
         });
 
         authFilter.setAuthenticationFailureHandler((request, response, exception) -> {
-            response.setStatus(response.getStatus());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
             response.getWriter().write(objectMapper.writeValueAsString(Map.
-                    of("status", response.getStatus(), "message", "unauthenticated")));
+                    of("status", HttpServletResponse.SC_UNAUTHORIZED, "message", "unauthenticated")));
         });
         return authFilter;
     }
@@ -112,7 +117,7 @@ public class SecurityConfiguration {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedMethods(List.of("POST","GET","DELETE","PUT", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
+        corsConfiguration.setAllowedOrigins(List.of(corsAllowedOrigins.split(",")));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
@@ -124,8 +129,20 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity, AuthenticationManager authenticationManager) {
         return httpSecurity.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfiguration()))
-                .authorizeHttpRequests(requests -> requests.requestMatchers(publicUrls)
-                        .permitAll().anyRequest().authenticated())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(requests -> requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                    "/api/v1/lifelink/hospitals/auth/onboard",
+                    "/api/v1/lifelink/hospitals/auth/login",
+                    "/api/v1/lifelink/hospitals/auth/refresh",
+                    "/api/v1/lifelink/cases/webhook",
+                    "/api/v1/lifelink/ai/chat")
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/lifelink/cases/{caseId}")
+                .permitAll()
+                .requestMatchers(publicUrls).permitAll()
+                .anyRequest().authenticated())
                 .addFilterAt(authFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtFilter,UsernamePasswordAuthenticationFilter.class)
                 .build();

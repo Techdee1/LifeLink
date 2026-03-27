@@ -4,8 +4,8 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/lifelink
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: Henry123@#$
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
   data:
     redis:
       host: localhost
@@ -36,8 +36,6 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.security.web: DEBUG
 
-AI_SERVICE_URL: ${AI_SERVICE_URL:http://localhost:8000}
-
 INTERSWITCH:
   PAYMENT_CLIENT_ID: ${INTERSWITCH_PAYMENT_CLIENT_ID}
   PAYMENT_CLIENT_SECRET: ${INTERSWITCH_PAYMENT_CLIENT_SECRET}
@@ -47,6 +45,9 @@ INTERSWITCH:
   VERIFICATION_CLIENT_SECRET: ${INTERSWITCH_VERIFICATION_SECRET}
 
   WEBHOOK_SECRET_KEY: ${WEBHOOK_SECRET_KEY}
+
+app:
+  base-url: ${APP_BASE_URL:https://lifelink-backend-bkg9w.ondigitalocean.app}
 
 twilio:
   account:

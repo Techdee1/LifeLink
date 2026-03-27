@@ -26,6 +26,7 @@ public class Case {
     private String patientEmail;
     private BigDecimal depositTarget;
     private PatientCase patientCase;
+    private boolean bridgeAlertSent;
     private LocalDateTime createdAt;
 
     @PrePersist
