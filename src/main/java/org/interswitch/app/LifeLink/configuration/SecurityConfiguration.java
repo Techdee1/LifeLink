@@ -117,7 +117,7 @@ public class SecurityConfiguration {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedMethods(List.of("POST","GET","DELETE","PUT", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173","https://lifelink-sable.vercel.app"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173","https://lifelink-sable.vercel.app", "https://lifelink-sable.vercel.app/"));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
