@@ -90,10 +90,10 @@ public class InterswitchService {
             // If Interswitch blocks your Client ID, this "Simulated Success" keeps your demo alive
             System.err.println("Virtual account provider failed, using fallback: " + e.getMessage());
             return VirtualAccountResponse.builder()
-                    .bankCode("999")
-                    .bankName("Interswitch Sandbox Bank")
+                    .bankCode("035")
+                    .bankName("Wema Bank")
                     .accountName(caseRequest.getPatientName())
-                    .accountNumber("1234567890")
+                    .accountNumber("0424578921")
                     .build();
         }
     }
