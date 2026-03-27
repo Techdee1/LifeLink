@@ -82,7 +82,7 @@ public class HospitalService {
             throw new RuntimeException("Case already exists for patient.");
 
         Case user_case = getUserCase(caseRequest,hospital);
-        whatsAppNotificationService.sendCaseLink(caseRequest.getLeadKinPhone(), caseRequest.getPatientName(), user_case.getCaseId().toString());
+        whatsAppNotificationService.sendCaseLink(caseRequest.getLeadKinPhone(), caseRequest.getPatientName(), user_case.getCaseId());
 
         VirtualAccount virtualAccount = getVirtualAccount(virtualAccountResponse, user_case);
         virtualAccountRepository.save(virtualAccount);
