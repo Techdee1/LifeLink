@@ -1,5 +1,6 @@
 package org.interswitch.app.LifeLink.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.interswitch.app.LifeLink.mapper.HospitalMapper;
 import org.interswitch.app.LifeLink.model.*;
@@ -7,6 +8,7 @@ import org.interswitch.app.LifeLink.pagination.CasePageRequest;
 import org.interswitch.app.LifeLink.repository.*;
 import org.interswitch.app.LifeLink.request.CaseRequest;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
+import org.interswitch.app.LifeLink.request.LiquidityRequest;
 import org.interswitch.app.LifeLink.request.VirtualAccountResponse;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +49,13 @@ public class HospitalService {
     @Autowired
     private WhatsAppNotificationService whatsAppNotificationService;
 
-    public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
+    public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) throws JsonProcessingException {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
         log.debug("Settlement account ID: {}", hospital.getSettlementAccount().getAccountId());
         hospital.setAccountPassword(passwordEncoder.encode(hospital.getAccountPassword()));
+
+        //verify Account Number
+        interswitchService.validateBvn(hospitalDataRequest.getSettlementAccount().getAccountNumber(), hospitalDataRequest.getSettlementAccount().getBankCode());
 
         hospitalAccountRepository.save(hospital.getSettlementAccount());
         log.info("hospital account details saved");
@@ -73,6 +78,8 @@ public class HospitalService {
         }
         return hospitalDataRequest;
     }
+
+
 
     public Map<String,Object> createPatientCase(CaseRequest caseRequest) {
         //verify hospital id
