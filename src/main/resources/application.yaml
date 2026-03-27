@@ -2,9 +2,9 @@ spring:
   application:
     name: lifelink
   datasource:
-    url: jdbc:mysql://localhost:3306/lifelink
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/lifelink
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME:root}
+    username: ${DB_USER}
     password: ${DB_PASSWORD:}
   data:
     redis:
