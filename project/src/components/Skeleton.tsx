@@ -5,8 +5,10 @@ interface SkeletonProps {
 export function Skeleton({ className = "" }: SkeletonProps) {
     return (
         <div
-            className={`animate-pulse bg-gray-200 rounded-lg ${className}`}
-        />
+            className={`relative overflow-hidden bg-gray-100 rounded-lg ${className}`}
+        >
+            <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        </div>
     );
 }
 
@@ -31,10 +33,8 @@ export function TableSkeleton({
 }) {
     return (
         <div className="space-y-3">
-            {/* Search bar skeleton */}
-            <Skeleton className="h-12 w-full max-w-md rounded-2xl" />
-            {/* Table skeleton */}
-            <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden">
+            <Skeleton className="h-12 w-full max-w-md rounded-xl" />
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-gray-100">
@@ -58,9 +58,9 @@ export function TableSkeleton({
 
 export function CardSkeleton() {
     return (
-        <div className="bg-white rounded-[32px] p-8 border border-gray-100">
-            <Skeleton className="h-14 w-14 rounded-2xl mb-8" />
-            <Skeleton className="h-10 w-24 mb-2" />
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+            <Skeleton className="h-10 w-10 rounded-xl mb-4" />
+            <Skeleton className="h-8 w-24 mb-2" />
             <Skeleton className="h-4 w-20" />
         </div>
     );
@@ -68,19 +68,31 @@ export function CardSkeleton() {
 
 export function CaseDetailSkeleton() {
     return (
-        <div className="max-w-4xl mx-auto p-8 space-y-6">
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-5 w-40" />
-            <div className="bg-white rounded-2xl p-8 space-y-4">
-                <Skeleton className="h-6 w-48" />
-                <div className="grid grid-cols-2 gap-4">
-                    <Skeleton className="h-20 rounded-xl" />
-                    <Skeleton className="h-20 rounded-xl" />
-                    <Skeleton className="h-20 rounded-xl" />
-                    <Skeleton className="h-20 rounded-xl" />
+        <div className="max-w-5xl mx-auto p-6 space-y-6">
+            {/* Hero skeleton */}
+            <Skeleton className="h-64 w-full rounded-2xl" />
+            {/* Progress bar skeleton */}
+            <div className="bg-white rounded-2xl p-8 space-y-4 border border-gray-100">
+                <div className="flex justify-between">
+                    <Skeleton className="h-10 w-40" />
+                    <Skeleton className="h-10 w-32" />
                 </div>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-10 w-full rounded-full" />
+                <Skeleton className="h-6 w-full rounded-full" />
+                <div className="flex justify-between">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-16" />
+                </div>
+            </div>
+            {/* Trust indicators */}
+            <div className="grid grid-cols-3 gap-4">
+                <Skeleton className="h-16 rounded-xl" />
+                <Skeleton className="h-16 rounded-xl" />
+                <Skeleton className="h-16 rounded-xl" />
+            </div>
+            {/* Two column */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <Skeleton className="h-64 rounded-2xl lg:col-span-3" />
+                <Skeleton className="h-64 rounded-2xl lg:col-span-2" />
             </div>
         </div>
     );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, AlertCircle, Loader2 } from 'lucide-react';
+import { Heart, AlertCircle, Loader2, Shield, Clock, Zap, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Login() {
@@ -23,7 +23,7 @@ export default function Login() {
         accountPassword: password,
       });
       navigate('/dashboard');
-    } catch (err) {
+    } catch {
       setError('Invalid credentials. Please check your email and password.');
     } finally {
       setLoading(false);
@@ -31,47 +31,120 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Abstract Background Shapes */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-500/10 rounded-full blur-[120px]" />
+    <div className="min-h-screen flex">
+      {/* Left Panel — Brand Story */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/images/hero-medical.jpg"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/90 via-[#0F172A]/80 to-primary-900/70" />
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-[480px] relative z-10"
-      >
-        <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] p-12">
-          <div className="flex flex-col items-center mb-10">
-            <motion.div 
-              whileHover={{ rotate: 15, scale: 1.1 }}
-              className="bg-gradient-to-br from-primary-500 to-secondary-500 p-4 rounded-[24px] shadow-2xl shadow-primary-500/20 mb-6"
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* Top — Logo */}
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="bg-white/10 backdrop-blur-sm p-2 rounded-xl border border-white/10">
+              <Heart className="w-5 h-5 text-white" fill="white" />
+            </div>
+            <span className="text-lg font-heading font-bold text-white">LifeLink</span>
+          </Link>
+
+          {/* Center — Story */}
+          <div className="max-w-md">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              <Heart className="w-10 h-10 text-white" fill="white" strokeWidth={2.5} />
+              <h2 className="text-3xl xl:text-4xl font-heading font-black text-white leading-tight mb-6">
+                Powering emergency healthcare financing across Nigeria
+              </h2>
+              <p className="text-gray-300 leading-relaxed mb-10">
+                Your hospital dashboard gives you real-time control over emergency
+                cases, bridge loans, and patient funding — all in one place.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { icon: Zap, text: 'Instant virtual account generation for every case' },
+                  { icon: Shield, text: 'Bridge loans unlocked at 60% funding threshold' },
+                  { icon: Clock, text: 'Real-time donation tracking and disbursement' },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="bg-white/10 p-2 rounded-lg flex-shrink-0">
+                      <item.icon className="w-4 h-4 text-primary-300" />
+                    </div>
+                    <p className="text-sm text-gray-300">{item.text}</p>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
-            <h1 className="text-4xl font-heading font-extrabold text-white tracking-tight mb-3">
-              LifeLink
+          </div>
+
+          {/* Bottom — Footer */}
+          <p className="text-xs text-gray-500">
+            &copy; {new Date().getFullYear()} LifeLink. All rights reserved.
+          </p>
+        </div>
+      </div>
+
+      {/* Right Panel — Login Form */}
+      <div className="flex-1 flex items-center justify-center bg-gray-50 p-6 relative">
+        {/* Mobile back to home */}
+        <Link
+          to="/"
+          className="absolute top-6 left-6 flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors lg:hidden"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Link>
+
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[420px]"
+        >
+          {/* Mobile Logo */}
+          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+            <div className="bg-primary-500 p-2 rounded-xl">
+              <Heart className="w-5 h-5 text-white" fill="white" />
+            </div>
+            <span className="text-lg font-heading font-bold text-gray-900">LifeLink</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-heading font-black text-gray-900 mb-2">
+              Welcome back
             </h1>
-            <p className="text-slate-400 font-medium text-center">
-              Elevating emergency healthcare through <br/> instant medical financing.
+            <p className="text-gray-500">
+              Sign in to your hospital dashboard
             </p>
           </div>
 
           {error && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mb-8 bg-emergency-500/10 border border-emergency-500/20 rounded-2xl p-4 flex items-start gap-3"
+              className="mb-6 bg-emergency-50 border border-emergency-200 rounded-xl p-4 flex items-start gap-3"
             >
               <AlertCircle className="w-5 h-5 text-emergency-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm font-semibold text-emergency-200 leading-relaxed">{error}</p>
+              <p className="text-sm font-medium text-emergency-700">{error}</p>
             </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-7">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-xs font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
                 Hospital Email
               </label>
               <input
@@ -79,50 +152,73 @@ export default function Login() {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-white font-medium placeholder:text-slate-600 outline-none"
+                className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all text-gray-900 placeholder:text-gray-400 outline-none"
                 placeholder="admin@hospital.org"
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">
-                Access Password
+            <div>
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Password
               </label>
               <input
                 type="password"
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-white font-medium placeholder:text-slate-600 outline-none"
-                placeholder="••••••••••••"
+                className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 transition-all text-gray-900 placeholder:text-gray-400 outline-none"
+                placeholder="Enter your password"
                 required
               />
             </div>
 
             <motion.button
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={loading}
-              className="w-full bg-white text-[#0F172A] hover:bg-slate-100 disabled:bg-slate-700 disabled:text-slate-400 font-extrabold py-5 px-6 rounded-[24px] transition-all flex items-center justify-center gap-3 shadow-xl overflow-hidden relative group"
+              className="w-full bg-[#0F172A] hover:bg-[#1e293b] disabled:bg-gray-300 text-white disabled:text-gray-500 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-gray-900/10"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  <span className="uppercase tracking-widest text-sm">Verifying...</span>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Signing in...</span>
                 </>
               ) : (
-                <span className="uppercase tracking-widest text-sm font-black">Authorize Access</span>
+                <span className="text-sm">Sign In</span>
               )}
             </motion.button>
           </form>
 
-          <p className="mt-8 text-center text-slate-500 text-sm font-medium">
-            New hospital? <Link to="/onboard" className="text-primary-400 hover:text-primary-300 font-bold ml-1 transition-colors">Request Onboarding</Link>
-          </p>
-        </div>
-      </motion.div>
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              New hospital?{' '}
+              <Link to="/onboard" className="text-primary-600 hover:text-primary-500 font-semibold transition-colors">
+                Register here
+              </Link>
+            </p>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="mt-10 pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5" />
+                Encrypted
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5" />
+                HEFAMA Verified
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                24/7 Access
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

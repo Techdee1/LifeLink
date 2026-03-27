@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth, AuthProvider } from "./contexts/AuthContext";
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Onboard from "./pages/Onboard";
 import Dashboard from "./pages/Dashboard";
@@ -8,6 +9,7 @@ import History from "./pages/History";
 import CasePage from "./pages/CasePage";
 import Settings from "./pages/Settings";
 import ChatWidget from "./components/ChatWidget";
+import MobileTabBar from "./components/MobileTabBar";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const { isAuthenticated } = useAuth();
@@ -19,11 +21,16 @@ function AuthenticatedChatWidget() {
     return isAuthenticated ? <ChatWidget /> : null;
 }
 
+function AuthenticatedMobileTabBar() {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <MobileTabBar /> : null;
+}
+
 function App() {
     return (
         <AuthProvider>
             <Routes>
-                <Route path="/" element={<Navigate to="/login" />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/onboard" element={<Onboard />} />
 
@@ -65,6 +72,7 @@ function App() {
 
                 <Route path="/case/:caseId" element={<CasePage />} />
             </Routes>
+            <AuthenticatedMobileTabBar />
             <AuthenticatedChatWidget />
         </AuthProvider>
     );

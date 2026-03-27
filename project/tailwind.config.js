@@ -7,6 +7,14 @@ export default {
                 sans: ["Inter", "sans-serif"],
                 heading: ["Outfit", "sans-serif"],
             },
+            animation: {
+                shimmer: "shimmer 1.5s infinite",
+            },
+            keyframes: {
+                shimmer: {
+                    "100%": { transform: "translateX(100%)" },
+                },
+            },
             colors: {
                 primary: {
                     50: "#f0f9ff",

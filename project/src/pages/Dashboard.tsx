@@ -1,11 +1,25 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Activity, TrendingUp, Users, Clock } from "lucide-react";
+import {
+    Plus,
+    Activity,
+    TrendingUp,
+    Users,
+    Clock,
+    ArrowRight,
+    FolderOpen,
+    History,
+    MessageCircle,
+    Heart,
+    Zap,
+    FileText,
+} from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import NewEmergencyModal from "../components/NewEmergencyModal";
 import { useAuth } from "../contexts/AuthContext";
-import { hospitalAPI } from "../lib/api-service";
-import { DashboardData } from "../types/api";
+import { hospitalAPI, caseAPI } from "../lib/api-service";
+import { DashboardData, CaseSummary } from "../types/api";
 
 export default function Dashboard() {
     const [showNewEmergencyModal, setShowNewEmergencyModal] = useState(false);
@@ -13,27 +27,35 @@ export default function Dashboard() {
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(
         null
     );
+    const [recentCases, setRecentCases] = useState<CaseSummary[]>([]);
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
+        const fetchData = async () => {
             try {
-                const data = await hospitalAPI.getDashboardData();
-                setDashboardData(data);
+                const [dashboard, active] = await Promise.all([
+                    hospitalAPI.getDashboardData(),
+                    caseAPI.getActive().catch(() => []),
+                ]);
+                setDashboardData(dashboard);
+                setRecentCases(active.slice(0, 5));
             } catch (error) {
                 console.error("Failed to fetch dashboard data:", error);
             }
         };
-        fetchDashboardData();
+        fetchData();
     }, []);
 
     const formatCurrency = (value: number) => {
-        if (value >= 1000000) {
-            return `₦${(value / 1000000).toFixed(1)}M`;
-        }
-        if (value >= 1000) {
-            return `₦${(value / 1000).toFixed(1)}K`;
-        }
-        return `₦${value}`;
+        if (value >= 1000000) return `₦${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000) return `₦${(value / 1000).toFixed(1)}K`;
+        return `₦${value.toLocaleString()}`;
+    };
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good morning";
+        if (hour < 17) return "Good afternoon";
+        return "Good evening";
     };
 
     const stats = [
@@ -41,54 +63,103 @@ export default function Dashboard() {
             label: "Active Cases",
             value: dashboardData?.activeCases?.toString() || "0",
             icon: Activity,
-            color: "text-primary-500",
-            bg: "bg-primary-500/10",
+            color: "text-primary-600",
+            bg: "bg-primary-50",
+            border: "border-primary-100",
         },
         {
-            label: "Bridged Funded",
+            label: "Bridge Funded",
             value: dashboardData?.bridgedFunded
                 ? formatCurrency(dashboardData.bridgedFunded)
                 : "₦0",
             icon: TrendingUp,
-            color: "text-secondary-500",
-            bg: "bg-secondary-500/10",
+            color: "text-secondary-600",
+            bg: "bg-secondary-50",
+            border: "border-secondary-100",
         },
         {
             label: "Lives Saved",
             value: dashboardData?.livesSaved?.toString() || "0",
             icon: Users,
-            color: "text-success-500",
-            bg: "bg-success-500/10",
+            color: "text-success-600",
+            bg: "bg-success-50",
+            border: "border-success-100",
         },
         {
             label: "Avg Response",
             value: dashboardData ? "< 24h" : "--",
             icon: Clock,
-            color: "text-emergency-500",
-            bg: "bg-emergency-500/10",
+            color: "text-warning-600",
+            bg: "bg-warning-50",
+            border: "border-warning-100",
         },
     ];
+
+    const quickActions = [
+        {
+            label: "New Emergency Case",
+            description: "Create a funding case for a patient",
+            icon: Plus,
+            color: "bg-primary-500 text-white",
+            onClick: () => setShowNewEmergencyModal(true),
+        },
+        {
+            label: "View Active Cases",
+            description: "Monitor ongoing cases",
+            icon: FolderOpen,
+            color: "bg-gray-100 text-gray-700",
+            to: "/dashboard/cases",
+        },
+        {
+            label: "Case History",
+            description: "Review completed cases",
+            icon: History,
+            color: "bg-gray-100 text-gray-700",
+            to: "/dashboard/history",
+        },
+    ];
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "OPEN":
+                return "bg-gray-100 text-gray-600";
+            case "PARTIALLY_FUNDED":
+                return "bg-warning-50 text-warning-700";
+            case "BRIDGE_ELIGIBLE":
+                return "bg-primary-50 text-primary-700";
+            case "FULLY_FUNDED":
+                return "bg-success-50 text-success-700";
+            case "CLOSED":
+                return "bg-secondary-50 text-secondary-700";
+            default:
+                return "bg-gray-100 text-gray-600";
+        }
+    };
+
+    const formatStatus = (status: string) => {
+        return status.replace(/_/g, " ");
+    };
 
     return (
         <div className="flex h-screen bg-[#F8FAFC]">
             <Sidebar />
 
             <main className="flex-1 overflow-y-auto">
-                <div className="p-10 max-w-7xl mx-auto">
-                    <header className="flex items-center justify-between mb-12">
+                <div className="p-6 md:p-10 max-w-7xl mx-auto pb-28 md:pb-10">
+                    {/* Header */}
+                    <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                         >
-                            <h1 className="text-4xl font-heading font-black text-[#0F172A] tracking-tight">
-                                Welcome back,{" "}
-                                {hospitalData?.adminName?.split(" ")[0] ||
-                                    "Admin"}{" "}
-                                👋
+                            <h1 className="text-3xl md:text-4xl font-heading font-black text-[#0F172A] tracking-tight">
+                                {getGreeting()},{" "}
+                                {hospitalData?.adminName?.split(" ")[0] || "Admin"}
                             </h1>
-                            <p className="text-[#64748B] mt-2 text-lg font-medium">
-                                Hospital Command Center •{" "}
+                            <p className="text-gray-500 mt-1.5 text-base font-medium">
+                                {hospitalData?.hospitalName || "Hospital"} &middot;{" "}
                                 {new Date().toLocaleDateString("en-US", {
+                                    weekday: "long",
                                     month: "long",
                                     day: "numeric",
                                     year: "numeric",
@@ -99,20 +170,18 @@ export default function Dashboard() {
                         <motion.button
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.05, y: -2 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
                             onClick={() => setShowNewEmergencyModal(true)}
-                            className="bg-primary-500 hover:bg-primary-600 text-white font-extrabold px-10 py-5 rounded-[24px] flex items-center gap-3 transition-all shadow-[0_20px_40px_-10px_rgba(14,165,233,0.3)] group overflow-hidden relative"
+                            className="bg-primary-500 hover:bg-primary-600 text-white font-bold px-6 py-3.5 rounded-xl flex items-center gap-2.5 transition-all shadow-lg shadow-primary-500/20"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                            <Plus className="w-5 h-5 stroke-[4px] relative z-10" />
-                            <span className="relative z-10 uppercase tracking-widest text-sm font-black">
-                                Initiate Case
-                            </span>
+                            <Plus className="w-5 h-5 stroke-[3px]" />
+                            <span className="text-sm">Initiate Case</span>
                         </motion.button>
                     </header>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
                         {stats.map((stat, index) => {
                             const Icon = stat.icon;
                             return (
@@ -120,99 +189,237 @@ export default function Dashboard() {
                                     key={stat.label}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{
-                                        y: -8,
-                                        shadow: "0 25px 50px -12px rgba(0,0,0,0.1)",
-                                    }}
-                                    className="bg-white rounded-[32px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative group cursor-pointer overflow-hidden"
+                                    transition={{ delay: index * 0.08 }}
+                                    className={`bg-white rounded-2xl p-5 md:p-6 border ${stat.border} hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-default`}
                                 >
-                                    <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] group-hover:scale-125 transition-transform duration-700">
-                                        <Icon className="w-full h-full" />
+                                    <div className={`${stat.bg} p-2.5 rounded-xl w-fit mb-4`}>
+                                        <Icon className={`w-5 h-5 ${stat.color}`} />
                                     </div>
-
-                                    <div className="flex items-start justify-between mb-8">
-                                        <div
-                                            className={`${stat.bg} p-4 rounded-2xl`}
-                                        >
-                                            <Icon
-                                                className={`w-8 h-8 ${stat.color} stroke-[2.5px]`}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="relative z-10">
-                                        <p className="text-4xl font-heading font-black text-[#0F172A] tracking-tight">
-                                            {stat.value}
-                                        </p>
-                                        <p className="text-[13px] font-bold text-[#64748B] mt-1.5 uppercase tracking-[0.15em] opacity-70 leading-none">
-                                            {stat.label}
-                                        </p>
-                                    </div>
+                                    <p className="text-2xl md:text-3xl font-heading font-black text-[#0F172A] tracking-tight">
+                                        {stat.value}
+                                    </p>
+                                    <p className="text-xs font-semibold text-gray-400 mt-1 uppercase tracking-wider">
+                                        {stat.label}
+                                    </p>
                                 </motion.div>
                             );
                         })}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 bg-white rounded-[40px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-12 overflow-hidden relative group">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary-500 via-secondary-500 to-primary-500" />
-
-                            <div className="flex items-center justify-between mb-12">
-                                <h2 className="text-2xl font-heading font-black text-[#0F172A] uppercase tracking-wider">
-                                    Recent Activity
-                                </h2>
-                                <button className="text-xs font-black text-primary-500 hover:text-primary-600 transition-colors uppercase tracking-[0.2em] border-b-2 border-primary-500/10 pb-1">
-                                    View All
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <div className="bg-slate-50 p-10 rounded-[40px] mb-8 group-hover:scale-110 transition-transform duration-500">
-                                    <Activity className="w-20 h-20 text-slate-200 animate-pulse" />
-                                </div>
-                                <p className="text-2xl font-black text-[#0F172A] mb-3">
-                                    No activity recorded yet
-                                </p>
-                                <p className="text-[#64748B] font-medium max-w-sm mx-auto leading-relaxed">
-                                    Once you start creating emergency cases,
-                                    your team's activity will appear here in
-                                    real-time.
-                                </p>
-                            </div>
+                    {/* Quick Actions */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.35 }}
+                        className="mb-10"
+                    >
+                        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                            Quick Actions
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {quickActions.map((action, index) =>
+                                action.to ? (
+                                    <Link
+                                        key={index}
+                                        to={action.to}
+                                        className="flex items-center gap-4 bg-white rounded-xl p-4 border border-gray-100 hover:border-primary-100 hover:shadow-md transition-all group"
+                                    >
+                                        <div className={`${action.color} p-3 rounded-xl group-hover:scale-110 transition-transform`}>
+                                            <action.icon className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900">{action.label}</p>
+                                            <p className="text-xs text-gray-400">{action.description}</p>
+                                        </div>
+                                        <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+                                    </Link>
+                                ) : (
+                                    <button
+                                        key={index}
+                                        onClick={action.onClick}
+                                        className="flex items-center gap-4 bg-white rounded-xl p-4 border border-gray-100 hover:border-primary-100 hover:shadow-md transition-all group text-left"
+                                    >
+                                        <div className={`${action.color} p-3 rounded-xl group-hover:scale-110 transition-transform`}>
+                                            <action.icon className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-gray-900">{action.label}</p>
+                                            <p className="text-xs text-gray-400">{action.description}</p>
+                                        </div>
+                                        <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+                                    </button>
+                                )
+                            )}
                         </div>
+                    </motion.div>
 
-                        <div className="bg-[#0F172A] rounded-[40px] shadow-2xl p-10 flex flex-col justify-between relative overflow-hidden group">
-                            <div className="absolute top-[-20%] right-[-20%] w-64 h-64 bg-primary-500/20 rounded-full blur-[80px] group-hover:scale-110 transition-transform duration-700" />
+                    {/* Two Column: Recent Cases + Bridge Info */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Recent Cases */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.45 }}
+                            className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 overflow-hidden"
+                        >
+                            <div className="flex items-center justify-between p-6 border-b border-gray-50">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-primary-50 p-2 rounded-lg">
+                                        <FileText className="w-4 h-4 text-primary-600" />
+                                    </div>
+                                    <h2 className="text-lg font-heading font-bold text-gray-900">
+                                        Recent Cases
+                                    </h2>
+                                </div>
+                                <Link
+                                    to="/dashboard/cases"
+                                    className="text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors flex items-center gap-1"
+                                >
+                                    View all
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
 
-                            <div className="relative z-10">
-                                <h3 className="text-white text-xl font-heading font-black uppercase tracking-[0.2em] mb-8">
-                                    Bridge Eligibility
+                            {recentCases.length > 0 ? (
+                                <div className="divide-y divide-gray-50">
+                                    {recentCases.map((c, index) => (
+                                        <motion.div
+                                            key={c.caseId}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ delay: 0.5 + index * 0.05 }}
+                                            className="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center flex-shrink-0">
+                                                    <Heart className="w-4 h-4 text-primary-500" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                                        {c.patientName}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400">
+                                                        Case #{c.caseId}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-4">
+                                                {/* Progress */}
+                                                <div className="hidden sm:flex items-center gap-3">
+                                                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full ${
+                                                                c.percentage >= 100
+                                                                    ? "bg-success-500"
+                                                                    : c.percentage >= 60
+                                                                    ? "bg-primary-500"
+                                                                    : "bg-warning-500"
+                                                            }`}
+                                                            style={{ width: `${Math.min(c.percentage, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-gray-500 w-10 text-right">
+                                                        {c.percentage}%
+                                                    </span>
+                                                </div>
+
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${getStatusColor(c.status)}`}>
+                                                    {formatStatus(c.status)}
+                                                </span>
+
+                                                <Link
+                                                    to={`/case/${c.caseId}`}
+                                                    className="text-xs font-semibold text-primary-500 hover:text-primary-600 transition-colors"
+                                                >
+                                                    View
+                                                </Link>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+                                    <div className="bg-gray-50 p-5 rounded-2xl mb-5">
+                                        <Activity className="w-10 h-10 text-gray-300" />
+                                    </div>
+                                    <p className="text-lg font-bold text-gray-800 mb-1.5">
+                                        No cases yet
+                                    </p>
+                                    <p className="text-sm text-gray-400 max-w-xs">
+                                        Create your first emergency case to start
+                                        receiving funds for patients.
+                                    </p>
+                                    <button
+                                        onClick={() => setShowNewEmergencyModal(true)}
+                                        className="mt-5 text-sm font-semibold text-primary-500 hover:text-primary-600 flex items-center gap-1.5 transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Create first case
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+
+                        {/* Bridge Info + Platform Tips */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="space-y-6"
+                        >
+                            {/* Bridge Info Card */}
+                            <div className="bg-[#0F172A] rounded-2xl p-6 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-40 h-40 bg-primary-500/15 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+
+                                <div className="relative z-10">
+                                    <div className="bg-primary-500/20 p-2.5 rounded-xl w-fit mb-4">
+                                        <Zap className="w-5 h-5 text-primary-400" />
+                                    </div>
+                                    <h3 className="text-lg font-heading font-bold text-white mb-2">
+                                        Bridge Loans
+                                    </h3>
+                                    <p className="text-sm text-gray-400 leading-relaxed mb-5">
+                                        When a case reaches 60% of the target, the patient's
+                                        next of kin can apply for an instant bridge loan to cover
+                                        the remaining gap.
+                                    </p>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                            <span className="text-xs text-gray-400">Threshold</span>
+                                            <span className="text-sm font-bold text-primary-400">60%</span>
+                                        </div>
+                                        <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                            <span className="text-xs text-gray-400">Max Coverage</span>
+                                            <span className="text-sm font-bold text-primary-400">40% of target</span>
+                                        </div>
+                                        <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                                            <span className="text-xs text-gray-400">Interest Rate</span>
+                                            <span className="text-sm font-bold text-primary-400">11.5%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* AI Assistant Tip */}
+                            <div className="bg-gradient-to-br from-secondary-50 to-primary-50 rounded-2xl p-6 border border-secondary-100">
+                                <div className="bg-white p-2.5 rounded-xl w-fit mb-4 shadow-sm">
+                                    <MessageCircle className="w-5 h-5 text-secondary-600" />
+                                </div>
+                                <h3 className="text-base font-heading font-bold text-gray-900 mb-1.5">
+                                    AI Assistant
                                 </h3>
-                                <div className="space-y-6">
-                                    <div className="flex items-center gap-4 bg-white/5 p-5 rounded-3xl border border-white/5">
-                                        <div className="w-2 h-2 rounded-full bg-success-500 shadow-[0_0_12px_#10b981]" />
-                                        <span className="text-slate-300 font-bold text-sm">
-                                            System Latency: 4ms
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-4 bg-white/5 p-5 rounded-3xl border border-white/5">
-                                        <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_12px_#0ea5e9]" />
-                                        <span className="text-slate-300 font-bold text-sm">
-                                            Secure Connection Active
-                                        </span>
-                                    </div>
+                                <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                                    Need help? Use the chat widget in the bottom-right corner.
+                                    It supports Yoruba, Hausa, Igbo, Pidgin and English.
+                                </p>
+                                <div className="flex items-center gap-1.5 text-sm font-semibold text-secondary-600">
+                                    <span>Available 24/7</span>
+                                    <div className="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse" />
                                 </div>
                             </div>
-
-                            <div className="relative z-10 pt-12">
-                                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mb-4">
-                                    Quick Action
-                                </p>
-                                <button className="w-full bg-white/10 hover:bg-white/20 text-white font-black py-5 rounded-[24px] transition-all border border-white/10 uppercase tracking-[0.2em] text-xs">
-                                    Run Diagnostic
-                                </button>
-                            </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </main>
