@@ -1,5 +1,6 @@
 package org.interswitch.app.LifeLink.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.interswitch.app.LifeLink.model.Hospital;
 import org.interswitch.app.LifeLink.request.HospitalDataRequest;
 import org.interswitch.app.LifeLink.request.HospitalLoginRequest;
@@ -23,7 +24,7 @@ public class HospitalController {
     private JwtService jwtService;
 
     @PostMapping("/auth/onboard")
-    public Map<String,Object> createHospitalAccount(@RequestBody HospitalDataRequest hospitalDataRequest) {
+    public Map<String,Object> createHospitalAccount(@RequestBody HospitalDataRequest hospitalDataRequest) throws JsonProcessingException {
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(hospitalService.createHospitalAccount(hospitalDataRequest))
                 .getBody();
     }
