@@ -44,6 +44,8 @@ public class HospitalService {
     private LoanRepository loanRepository;
     @Autowired
     private PaymentRepository paymentRepository;
+    @Autowired
+    private WhatsAppNotificationService whatsAppNotificationService;
 
     public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
@@ -83,10 +85,13 @@ public class HospitalService {
             throw new RuntimeException("Case already exists for patient.");
 
         Case user_case = getUserCase(caseRequest,hospital);
+        whatsAppNotificationService.sendCaseLink(caseRequest.getLeadKinPhone(), caseRequest.getPatientName(), user_case.getCaseId());
 
         VirtualAccount virtualAccount = getVirtualAccount(virtualAccountResponse, user_case);
         virtualAccountRepository.save(virtualAccount);
         log.info("virtual account details saved");
+
+
 
         return Map.of("caseId", user_case.getCaseId(),"bankCode", virtualAccountResponse.getBankCode(),
                 "virtualAccountNumber", virtualAccountResponse.getAccountNumber(),
@@ -110,6 +115,10 @@ public class HospitalService {
 
         double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
         is_bridge_eligible = (percentage > 60);
+        if(is_bridge_eligible){
+            whatsAppNotificationService.sendBridgeUnlockAlert(user_case.getLeadKinPhone());
+            log.info("bridge loan unlocked for caseId: {}", caseId);
+        }
 
         return Map.of("patient", user_case.getPatientName(), "hospital", user_case.getHospital().getHospitalName()
         ,"raised_amount", raisedAmount.doubleValue(), "target_amount", targetAmount.doubleValue(), "percentage", percentage, "virtual_account", virtualAccount.getVirtualAccountNumber(), "is_bridge_eligible", is_bridge_eligible);

@@ -16,7 +16,7 @@ import java.util.UUID;
 public class HospitalAccount {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UUID accountId;
 
     @Column(name = "account_number", nullable = false, unique = true)

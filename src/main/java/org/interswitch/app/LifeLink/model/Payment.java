@@ -1,9 +1,6 @@
 package org.interswitch.app.LifeLink.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 import org.interswitch.app.LifeLink.request.PaymentData;
 
@@ -15,6 +12,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String event;
+    @Column(unique = true)
     private String uuid;
     private long timestamp;
     private PaymentData data;

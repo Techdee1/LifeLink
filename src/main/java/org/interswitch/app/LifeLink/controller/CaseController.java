@@ -1,6 +1,7 @@
 package org.interswitch.app.LifeLink.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.interswitch.app.LifeLink.request.CaseRequest;
 import org.interswitch.app.LifeLink.request.LiquidityRequest;
 import org.interswitch.app.LifeLink.request.PaymentRequest;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
 
 @RestController
@@ -25,10 +28,12 @@ public class CaseController {
     private InterswitchService interswitchService;
     @Autowired
     private PaymentService paymentService;
-    @Value("${INTERSWITCH.GENERAL_CLIENT_SECRET}")
+    @Value("${INTERSWITCH.WEBHOOK_SECRET_KEY}")
     private String GENERAL_CLIENT_SECRET;
     @Value("${INTERSWITCH.GENERAL_CLIENT_ID}")
     private String GENERAL_CLIENT_ID;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostMapping("/initiate")
     public ResponseEntity<Map<String,Object>> createCase(@RequestBody CaseRequest caseRequest) {
@@ -47,14 +52,29 @@ public class CaseController {
 
     @PostMapping("/webhook")
     public ResponseEntity<?> handleWebhook(
-            @RequestHeader("X-Interswitch-Signature") String signature,
-            @RequestBody PaymentRequest paymentRequest) throws Exception {
-        String generatedHash = PaymentService.generateHmac(GENERAL_CLIENT_SECRET, paymentRequest);
+            @RequestHeader(value = "X-Interswitch-Signature", required = false) String signature,
+            @RequestBody String rawBody) throws Exception {
 
-        if (!generatedHash.equals(signature)) {
+        if (signature == null || signature.isEmpty()) {
+            return ResponseEntity.status(400).body("Missing signature");
+        }
+
+        String generatedHash = PaymentService.generateHmac(GENERAL_CLIENT_SECRET, rawBody);
+
+        if (!MessageDigest.isEqual(
+                generatedHash.getBytes(StandardCharsets.UTF_8),
+                signature.getBytes(StandardCharsets.UTF_8))) {
             return ResponseEntity.status(403).body("Invalid signature");
         }
-        return ResponseEntity.ok().body(paymentService.createPaymentWebhook(paymentRequest));
+
+        try {
+            PaymentRequest paymentRequest = objectMapper.readValue(rawBody, PaymentRequest.class);
+            paymentService.createPaymentWebhook(paymentRequest);
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body("Invalid payload");
+        }
+
+        return ResponseEntity.ok("Payment received");
     }
 
 
