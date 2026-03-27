@@ -40,6 +40,7 @@ public class PaymentService {
     @Autowired
     private AiService aiService;
 
+
     @Async
     public void createPaymentWebhook(PaymentRequest paymentRequest) {
 
@@ -79,6 +80,7 @@ public class PaymentService {
     public Map<String,Object> requestForLiquidity(LiquidityRequest liquidityRequest, Long caseId) throws JsonProcessingException {
         if(interswitchService.verifyBVN(liquidityRequest)) {
             if(Boolean.parseBoolean(hospitalService.viewCaseProgress(caseId).get("is_bridge_eligible").toString())) {
+
                 Map<String,Object> data = hospitalService.viewCaseProgress(caseId);
                 BigDecimal targetAmount = new BigDecimal(data.get("target_amount").toString());
                 BigDecimal raisedAmount = new BigDecimal(data.get("raised_amount").toString());
