@@ -142,3 +142,25 @@ export interface ChatResponse {
     conversation_id: string;
     detected_language?: string;
 }
+
+export interface RiskScoreRequest {
+    loan_amount?: number;
+}
+
+export interface RiskScoreResponse {
+    case_id: number;
+    risk_score: number;
+    risk_level: "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH";
+    recommendation: "APPROVE" | "REVIEW" | "DENY";
+    factors: Record<string, number>;
+    explanation: string;
+}
+
+export interface CasePredictionResponse {
+    case_id: number;
+    success_probability: number;
+    estimated_days_to_target: number | null;
+    confidence_level: "LOW" | "MEDIUM" | "HIGH";
+    factors: Record<string, number>;
+    explanation: string;
+}

@@ -23,6 +23,8 @@ import type { CaseDetails } from '../types/api';
 import ProgressBar from '../components/ProgressBar';
 import VirtualAccountCard from '../components/VirtualAccountCard';
 import BridgeApplicationModal from '../components/BridgeApplicationModal';
+import RiskScoreCard from '../components/RiskScoreCard';
+import CasePredictionCard from '../components/CasePredictionCard';
 
 function ShareButtons({ caseId, patientName }: { caseId: string; patientName: string }) {
   const [linkCopied, setLinkCopied] = useState(false);
@@ -346,6 +348,20 @@ export default function CasePage() {
               </p>
             </motion.div>
           )}
+
+          {/* AI Insights */}
+          <div className="space-y-4">
+            <RiskScoreCard
+              caseId={Number(caseId)}
+              targetAmount={caseData.target_amount}
+              raisedAmount={raisedAmount}
+              percentage={percentage}
+            />
+            <CasePredictionCard
+              caseId={Number(caseId)}
+              percentage={percentage}
+            />
+          </div>
 
           {/* Two Column: Virtual Account + Donor Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">

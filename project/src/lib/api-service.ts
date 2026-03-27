@@ -15,6 +15,9 @@ import type {
     DashboardData,
     ChatRequest,
     ChatResponse,
+    RiskScoreRequest,
+    RiskScoreResponse,
+    CasePredictionResponse,
 } from "../types/api";
 
 export const hospitalAPI = {
@@ -92,6 +95,16 @@ export const caseAPI = {
 export const aiAPI = {
     chat: async (data: ChatRequest): Promise<ChatResponse> => {
         const response = await apiClient.post("/ai/chat", data);
+        return response.data;
+    },
+
+    getRiskScore: async (caseId: number, data?: RiskScoreRequest): Promise<RiskScoreResponse> => {
+        const response = await apiClient.post(`/ai/loans/${caseId}/risk-score`, data || {});
+        return response.data;
+    },
+
+    getCasePrediction: async (caseId: number): Promise<CasePredictionResponse> => {
+        const response = await apiClient.post(`/ai/cases/${caseId}/predict`);
         return response.data;
     },
 };
