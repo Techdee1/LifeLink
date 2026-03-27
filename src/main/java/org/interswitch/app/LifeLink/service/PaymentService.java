@@ -106,7 +106,7 @@ public class PaymentService {
                 loan.setBridgedAmount(amountNeeded);
                 BigDecimal interestAmount = amountNeeded.multiply(BigDecimal.valueOf(0.115));
                 loan.setInterestAmount(interestAmount);
-                loan.setLoanStatus(LoanStatus.UNPAID.name());
+                loan.setLoanStatus(LoanStatus.PAID.name());
                 loan.setDeadline(LocalDateTime.now().plusDays(14));
                 loan.setTotalRepaymentAmount(amountNeeded.add(interestAmount));
 
