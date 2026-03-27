@@ -35,7 +35,7 @@ public class WhatsAppNotificationService {
 
         Message.creator(
                         new PhoneNumber("whatsapp:+" + toPhone), // Must be in E.164 format (e.g. 23481...)
-                        new PhoneNumber(fromWhatsAppNumber),
+                        new PhoneNumber("whatsapp:"+fromWhatsAppNumber),
                         messageBody)
                 .create();
     }
@@ -49,7 +49,7 @@ public class WhatsAppNotificationService {
 
         Message.creator(
                         new PhoneNumber("whatsapp:+" + toPhone),
-                        new PhoneNumber(fromWhatsAppNumber),
+                        new PhoneNumber("whatsapp:"+fromWhatsAppNumber),
                         messageBody)
                 .create();
     }
