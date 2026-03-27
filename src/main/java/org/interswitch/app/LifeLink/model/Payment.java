@@ -9,8 +9,7 @@ import org.interswitch.app.LifeLink.request.PaymentData;
 public class Payment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_seq")
-    @SequenceGenerator(name = "payment_seq", sequenceName = "payment_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String event;
     @Column(unique = true)

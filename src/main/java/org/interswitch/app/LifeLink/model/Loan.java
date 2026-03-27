@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 public class Loan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "loan_seq")
-    @SequenceGenerator(name = "loan_seq", sequenceName = "loan_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long caseId;
     private BigDecimal bridgedAmount; //amount requested by the customer
