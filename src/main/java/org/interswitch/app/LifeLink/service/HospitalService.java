@@ -55,7 +55,7 @@ public class HospitalService {
         hospital.setAccountPassword(passwordEncoder.encode(hospital.getAccountPassword()));
 
         //verify Account Number
-        interswitchService.validateBvn(hospitalDataRequest.getSettlementAccount().getAccountNumber(), hospitalDataRequest.getSettlementAccount().getBankCode());
+        //interswitchService.validateBvn(hospitalDataRequest.getSettlementAccount().getAccountNumber(), hospitalDataRequest.getSettlementAccount().getBankCode());
 
         hospitalAccountRepository.save(hospital.getSettlementAccount());
         log.info("hospital account details saved");
