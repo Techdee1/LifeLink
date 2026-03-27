@@ -10,8 +10,7 @@ import java.math.BigDecimal;
 public class VirtualAccount {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "virtual_seq")
-    @SequenceGenerator(name = "virtual_seq", sequenceName = "virtual_sequence", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String bankCode;
     private String virtualAccountNumber;
