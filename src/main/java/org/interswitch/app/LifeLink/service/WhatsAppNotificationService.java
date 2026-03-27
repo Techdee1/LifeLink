@@ -19,7 +19,7 @@ public class WhatsAppNotificationService {
     @Value("${twilio.whatsapp.number}")
     private String fromWhatsAppNumber; // Usually "whatsapp:+14155238886" for sandbox
 
-    @Value("${app.base-url:https://lifelink-backend-bkg9w.ondigitalocean.app}")
+    @Value("${app.base-url:https://lifelink-sable.vercel.app}")
     private String appBaseUrl;
 
     public void sendCaseLink(String toPhone, String patientName, Long caseId) {
