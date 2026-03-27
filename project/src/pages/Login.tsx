@@ -191,7 +191,26 @@ export default function Login() {
             </motion.button>
           </form>
 
-          <div className="mt-8 text-center">
+          {/* Demo Credentials */}
+          <div className="mt-6 bg-primary-50 border border-primary-100 rounded-xl p-4">
+            <p className="text-xs font-semibold text-primary-700 mb-2">Demo Credentials</p>
+            <div className="space-y-1 text-xs text-primary-600">
+              <p>Email: <span className="font-mono font-semibold">admin@luthnigeria.org</span></p>
+              <p>Password: <span className="font-mono font-semibold">okafor@123</span></p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@luthnigeria.org');
+                setPassword('okafor@123');
+              }}
+              className="mt-3 text-xs font-semibold text-primary-700 hover:text-primary-800 underline underline-offset-2 transition-colors"
+            >
+              Auto-fill credentials
+            </button>
+          </div>
+
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               New hospital?{' '}
               <Link to="/onboard" className="text-primary-600 hover:text-primary-500 font-semibold transition-colors">
