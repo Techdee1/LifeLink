@@ -22,7 +22,7 @@ public class HospitalAccount {
 
     @Column(name = "account_number", nullable = false, unique = true)
     private String accountNumber;
-    @Column(name = "bank_code", nullable = false, unique = true)
+    @Column(name = "bank_code", nullable = false)
     private String bankCode;
     @Column(name = "account_name", nullable = false, unique = true)
     private String accountName;
