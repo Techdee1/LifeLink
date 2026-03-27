@@ -1,9 +1,6 @@
 package org.interswitch.app.LifeLink.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,7 +10,8 @@ import java.math.BigDecimal;
 public class VirtualAccount {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "virtual_seq")
+    @SequenceGenerator(name = "virtual_seq", sequenceName = "virtual_sequence", allocationSize = 1)
     private Long id;
     private String bankCode;
     private String virtualAccountNumber;

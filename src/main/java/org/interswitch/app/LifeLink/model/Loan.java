@@ -1,9 +1,6 @@
 package org.interswitch.app.LifeLink.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,7 +11,8 @@ import java.time.LocalDateTime;
 public class Loan {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "loan_seq")
+    @SequenceGenerator(name = "loan_seq", sequenceName = "loan_sequence", allocationSize = 1)
     private Long id;
     private Long caseId;
     private BigDecimal bridgedAmount; //amount requested by the customer

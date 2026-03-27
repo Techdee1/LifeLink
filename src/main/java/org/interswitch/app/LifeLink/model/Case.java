@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 public class Case {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "case_seq")
+    @SequenceGenerator(name = "case_seq", sequenceName = "case_sequence", allocationSize = 1)
     private Long caseId;
     @ManyToOne
     @JoinColumn(name = "hospital_account", referencedColumnName = "id")

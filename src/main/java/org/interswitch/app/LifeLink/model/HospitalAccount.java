@@ -16,8 +16,7 @@ import java.util.UUID;
 public class HospitalAccount {
 
     @Id
-    @GeneratedValue
-    @org.hibernate.annotations.UuidGenerator
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID accountId;
 
     @Column(name = "account_number", nullable = false, unique = true)

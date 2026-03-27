@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Hospital {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column(name = "hospital_name", unique = true)
     private String hospitalName;
