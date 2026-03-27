@@ -49,7 +49,7 @@ public class HospitalService {
 
     public Map<String,Object> createHospitalAccount(HospitalDataRequest hospitalDataRequest) {
         Hospital hospital = hospitalMapper.convertRequestToModel(hospitalDataRequest);
-        System.out.println(hospital.getSettlementAccount().getAccountId());
+        log.debug("Settlement account ID: {}", hospital.getSettlementAccount().getAccountId());
         hospital.setAccountPassword(passwordEncoder.encode(hospital.getAccountPassword()));
 
         hospitalAccountRepository.save(hospital.getSettlementAccount());
@@ -115,8 +115,10 @@ public class HospitalService {
 
         double percentage = (raisedAmount.doubleValue() / targetAmount.doubleValue()) * 100;
         is_bridge_eligible = (percentage > 60);
-        if(is_bridge_eligible){
+        if(is_bridge_eligible && !user_case.isBridgeAlertSent()){
             whatsAppNotificationService.sendBridgeUnlockAlert(user_case.getLeadKinPhone());
+            user_case.setBridgeAlertSent(true);
+            caseRepository.save(user_case);
             log.info("bridge loan unlocked for caseId: {}", caseId);
         }
 
@@ -207,10 +209,9 @@ public class HospitalService {
         virtualAccount.setBankCode(virtualAccountResponse.getBankCode());
         virtualAccount.setCaseId(user_case.getCaseId());
         virtualAccount.setAccountName(virtualAccountResponse.getAccountName());
-        BigDecimal raisedAmount = new BigDecimal(400000);
-        virtualAccount.setRaisedAmount(raisedAmount);
+        virtualAccount.setRaisedAmount(BigDecimal.ZERO);
         virtualAccount.setTargetAmount(user_case.getDepositTarget());
-        double percentage = (raisedAmount.doubleValue() / user_case.getDepositTarget().doubleValue()) * 100;
+        double percentage = 0.0;
         virtualAccount.setPercentage(percentage);
         virtualAccount.setStatus(PatientCase.OPEN);
         virtualAccount.setPatientEmail(user_case.getPatientEmail());

@@ -19,10 +19,13 @@ public class WhatsAppNotificationService {
     @Value("${twilio.whatsapp.number}")
     private String fromWhatsAppNumber; // Usually "whatsapp:+14155238886" for sandbox
 
+    @Value("${app.base-url:https://lifelink-backend-bkg9w.ondigitalocean.app}")
+    private String appBaseUrl;
+
     public void sendCaseLink(String toPhone, String patientName, Long caseId) {
         Twilio.init(accountSid, authToken);
 
-        String link = "https://lifelink-backend-bkg9w.ondigitalocean.app/case/" + caseId;
+        String link = appBaseUrl + "/case/" + caseId;
         String messageBody = String.format(
                 "🚨 *LifeLink Emergency Alert*\n\n" +
                         "An emergency case has been opened for *%s*.\n" +
